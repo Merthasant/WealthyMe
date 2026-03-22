@@ -854,6 +854,7 @@ Dan yang paling penting: **developer experience enak banget 😎**
 
 ## 📁 FOLDER STRUCTURE
 
+```
 frontend/
 └── src/
 ├── component/
@@ -875,6 +876,7 @@ frontend/
 ├── lib/ # helper, utils, config
 ├── provider/ # context / global state
 └── route/ # route component
+```
 
 ---
 
