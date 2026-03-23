@@ -1,0 +1,138 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+enum roles {
+  admin
+  user
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model user {
+  id            String         @id @default(uuid())
+  name          String
+  email         String         @unique
+  password      String
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+  role          role? // for 1-1 relation
+  refreshTokens refreshToken[]
+  profile       profile?
+  accounts      account[]
+  categories    category[]
+
+  @@index([name])
+  @@index([updatedAt])
+}
+
+model role {
+  id        String   @id @default(uuid())
+  name      roles    @default(user)
+  userId    String   @unique // for 1-1 relation
+  user      user     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// for scalable
+
+model refreshToken {
+  id        String   @id @default(uuid())
+  token     String
+  isRevoked Boolean  @default(false)
+  expiredAt DateTime
+  device    String
+  userId    String
+  user      user     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([isRevoked])
+  @@index([userId])
+}
+
+model profile {
+  id          String    @id @default(uuid())
+  displayName String?   @unique
+  birthDate   DateTime? @db.Date
+  profession  String?
+  avatarUrl   String?
+  timezone    String
+  userId      String    @unique
+  user        user      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+}
+
+enum walletType {
+  cash
+  e_wallet
+  bank
+  investment
+}
+
+model account {
+  id      String     @id @default(uuid())
+  name    String
+  type    walletType @default(cash)
+  balance Decimal    @db.Decimal(15, 2)
+  userId  String
+  user    user       @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+  transactions transaction[]
+
+  @@index([name])
+  @@index([type])
+  @@index([updatedAt])
+  @@index([userId])
+}
+
+enum transactionType {
+  income
+  expense
+}
+
+model category {
+  id           String          @id @default(uuid())
+  name         String
+  type         transactionType
+  userId       String?
+  user         user?           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt    DateTime        @default(now())
+  updatedAt    DateTime        @updatedAt
+  transactions transaction[]
+
+  @@index([userId])
+  @@index([type])
+  @@index([name])
+  @@index([updatedAt])
+}
+
+model transaction {
+  id            String          @id @default(uuid())
+  amount        Decimal         @db.Decimal(15, 2)
+  type          transactionType
+  note          String?
+  transactionAt DateTime
+  deletedAt     DateTime?
+  receiptUrl    String?
+  accountId     String
+  account       account         @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  categoryId    String
+  category      category        @relation(fields: [categoryId], references: [id], onDelete: Restrict)
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
+
+  @@index([updatedAt])
+  @@index([categoryId])
+  @@index([accountId])
+  @@index([transactionAt])
+  @@index([type])
+  @@index([deletedAt])
+}
