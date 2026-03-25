@@ -76,12 +76,7 @@ const userService = {
     validationUtils.requiredValue(id, "id");
     return await prisma.user.findUnique({
       where: { id },
-      select: {
-        name: true,
-        email: true,
-        role: { select: { name: true } },
-        updatedAt: true,
-      },
+      select: userSelect,
     });
   },
   // find by email
@@ -98,12 +93,7 @@ const userService = {
     validationUtils.requiredValue(email, "email");
     return await prisma.user.findUnique({
       where: { email },
-      select: {
-        name: true,
-        email: true,
-        role: { select: { name: true } },
-        updatedAt: true,
-      },
+      select: userSelect,
     });
   },
 
