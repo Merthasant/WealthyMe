@@ -7,6 +7,7 @@ import validationUtils from "@/lib/utils/validation.utils.js";
 import argon2 from "argon2";
 
 const userSelect: Prisma.userSelect = {
+  id: true,
   name: true,
   email: true,
   updatedAt: true,
