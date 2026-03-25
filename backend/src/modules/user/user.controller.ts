@@ -31,7 +31,7 @@ const userController = {
       return responseUtils.success(
         res,
         200,
-        "successfult getting all user",
+        "successfully getting all user",
         userData.data,
         null,
         userData.meta,
