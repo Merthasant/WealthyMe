@@ -99,7 +99,7 @@ const authService = {
         include: { role: true },
       });
       if (!existingUser) throw new NotFoundError("user not found!");
-      const matchPass = await argon2.verify(passwrod, existingUser.password);
+      const matchPass = await argon2.verify(existingUser.password, passwrod);
       const role: "admin" | "user" | undefined = existingUser.role?.name;
       if (!role) throw new ValidationError("user don't have a role!");
       if (!matchPass) throw new ValidationError("password not match!");
