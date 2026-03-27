@@ -1,4 +1,4 @@
-import { StringFilter } from "@/generated/prisma/commonInputTypes";
+import { Request } from "express";
 
 export interface AuthOutput {
   id: string;
@@ -10,4 +10,9 @@ export interface AuthOutput {
     accessToken: string;
     refreshToken: string;
   };
+}
+
+export interface AuthRequest extends Request {
+  userId: string;
+  role: "admin" | "user";
 }
