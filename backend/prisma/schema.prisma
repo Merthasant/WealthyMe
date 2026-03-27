@@ -42,7 +42,7 @@ model role {
 
 model refreshToken {
   id        String   @id @default(uuid())
-  token     String
+  token     String   @unique
   isRevoked Boolean  @default(false)
   expiredAt DateTime
   device    String

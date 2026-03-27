@@ -56,13 +56,25 @@ const authService = {
     });
   },
 
+  async getRefreshTokenByToken(token: string) {
+    validationUtils.requiredValue(token, "token");
+    return await prisma.refreshToken.findUnique({ where: { token } });
+  },
+
+  async revokedRefreshToken(token: string) {
+    validationUtils.requiredValue(token, "token");
+
+    await prisma.$transaction(async (tx) => {});
+  },
+
+  // unplug refresh token
   async unplugRefreshToken(
     refreshToken: string,
     userId: string,
     device: string,
     tx: Prisma.TransactionClient,
   ) {
-    const existingRefreshToken = await tx.refreshToken.findFirst({
+    const existingRefreshToken = await tx.refreshToken.findUnique({
       where: {
         token: refreshToken,
         user: { id: userId },
