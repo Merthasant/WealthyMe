@@ -4,8 +4,16 @@ import jwtUtils from "@/lib/utils/jwt.utils";
 import responseUtils from "@/lib/utils/response.utils";
 import { Request, Response } from "express";
 import authService from "./auth.service";
-import { AuthRequest } from "@/lib/types/auth.type";
 import userService from "../user/user.service";
+
+declare global {
+  namespace Express {
+    interface Request {
+      userId?: string;
+      role?: string;
+    }
+  }
+}
 
 const authController = {
   setRefreshTokenInCookie(res: Response, refreshToken: string) {
@@ -58,7 +66,7 @@ const authController = {
     }
   },
 
-  async logout(req: AuthRequest, res: Response) {
+  async logout(req: Request, res: Response) {
     const { userId } = req;
     if (!userId) return responseUtils.error(res, 401, "unauthenticated!");
     const { refreshToken } = req.cookies;
@@ -74,7 +82,7 @@ const authController = {
     }
   },
 
-  async me(req: AuthRequest, res: Response) {
+  async me(req: Request, res: Response) {
     const { userId } = req;
     if (!userId) return responseUtils.error(res, 401, "unauthenticated!");
     try {

@@ -11,8 +11,3 @@ export interface AuthOutput {
     refreshToken: string;
   };
 }
-
-export interface AuthRequest extends Request {
-  userId: string;
-  role: "admin" | "user";
-}

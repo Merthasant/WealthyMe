@@ -1,13 +1,21 @@
-import { AuthRequest } from "@/lib/types/auth.type";
 import { catchAllErrors } from "@/lib/utils/error.utils";
 import responseUtils from "@/lib/utils/response.utils";
 import authService from "@/modules/auth/auth.service";
-import { NextFunction, Response } from "express";
+import { NextFunction, Request, Response } from "express";
 import jwt from "jsonwebtoken";
+
+declare global {
+  namespace Express {
+    interface Request {
+      userId?: string;
+      role?: string;
+    }
+  }
+}
 
 const accessMiddleware = {
   // verify user
-  async verifyUser(req: AuthRequest, res: Response, next: NextFunction) {
+  async verifyUser(req: Request, res: Response, next: NextFunction) {
     // authentication
     const authHeader = req.headers.authorization;
     if (!authHeader) return responseUtils.error(res, 401, "unauthenticated!");
@@ -76,7 +84,7 @@ const accessMiddleware = {
     }
     next();
   },
-  async isAdmin(req: AuthRequest, res: Response, next: NextFunction) {
+  async isAdmin(req: Request, res: Response, next: NextFunction) {
     const role = req.role;
     if (!role) return responseUtils.error(res, 400, "role is required!");
     try {
