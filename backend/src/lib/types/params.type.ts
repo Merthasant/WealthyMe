@@ -5,3 +5,7 @@ export interface OptionParam {
   sortBy: string;
   sortOrder: "asc" | "desc";
 }
+
+export interface AccountOptionParam extends OptionParam {
+  type?: "cash" | "e_wallet" | "bank" | "investment";
+}
