@@ -14,9 +14,14 @@ const accountController = {
     if (!id) return responseUtils.error(res, 400, "id is required!");
     try {
       const accountData = await accountService.findById(id.toString());
-      if (accountData)
+      if (!accountData)
         return responseUtils.error(res, 404, "account not found!");
-      return responseUtils.success(res, 200, "account founded successfully!");
+      return responseUtils.success(
+        res,
+        200,
+        "account founded successfully!",
+        accountData,
+      );
     } catch (err) {
       return catchAllErrors(res, err);
     }
