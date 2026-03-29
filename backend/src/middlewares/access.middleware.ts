@@ -20,13 +20,16 @@ const accessMiddleware = {
     const authHeader = req.headers.authorization;
     if (!authHeader) return responseUtils.error(res, 401, "unauthenticated!");
     // get access token
-    if (!authHeader.startsWith("bearer"))
+    if (!authHeader.startsWith("Bearer"))
       return responseUtils.error(res, 400, "invalid token format!");
     const accessToken = authHeader.split(" ")[1];
     // get refresh token
     const { refreshToken } = req.cookies;
     if (!refreshToken) return responseUtils.error(res, 401, "unauthenticated!");
-    let refreshDecoded: jwt.JwtPayload;
+    let refreshDecoded;
+
+    // get device
+    const device = req.headers["user-agent"] ?? "unknown";
 
     // verify refresh token
     try {
@@ -39,7 +42,10 @@ const accessMiddleware = {
     }
 
     // get refresh token in store
-    const storedToken = await authService.getRefreshTokenByToken(refreshToken);
+    const storedToken = await authService.getRefreshTokenByToken(
+      refreshToken,
+      device,
+    );
     if (!storedToken) {
       res.clearCookie("refreshToken");
       return responseUtils.error(res, 404, "refresh token not found!");
@@ -65,18 +71,19 @@ const accessMiddleware = {
       const accessDecoded = authService.verifyAccessToken(
         accessToken,
       ) as jwt.JwtPayload;
-      req.userId = accessDecoded.userId;
+      req.userId = accessDecoded.id;
       req.role = accessDecoded.role;
+      console.log({ userId: req.userId, role: req.role });
     } catch (err) {
       if (err instanceof jwt.TokenExpiredError) {
         const newAccessToken = authService.createAccessToken(
-          refreshDecoded.userId,
+          refreshDecoded.id,
           refreshDecoded.role,
         );
         if (!newAccessToken)
           return responseUtils.error(res, 500, "failed to generate token!");
         res.setHeader("x-new-access-token", `Bearer ${newAccessToken}`);
-        req.userId = refreshDecoded.userId;
+        req.userId = refreshDecoded.id;
         req.role = refreshDecoded.role;
         return next();
       }
