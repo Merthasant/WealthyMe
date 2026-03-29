@@ -29,11 +29,13 @@ const authController = {
     const { email, password } = req.body;
     if (!email || !password)
       return responseUtils.error(res, 400, "email or password is required!");
+    const device = req.headers["user-agent"] ?? "unknown";
     try {
       const loginData = await authService.login(email, password);
       const { token, ...data } = loginData;
       const { accessToken, refreshToken } = token;
       authController.setRefreshTokenInCookie(res, refreshToken);
+      authService.addRefreshToken(refreshToken, data.id, device);
       return responseUtils.success(res, 200, "user login successfully", {
         ...data,
         token: { accessToken },
@@ -46,6 +48,7 @@ const authController = {
     const { name, email, password, confPassword, role } = req.body;
     if (!name || !email || !password || !confPassword || !role)
       return responseUtils.error(res, 400, "email or password is required!");
+    const device = req.headers["user-agent"] ?? "unknown";
     try {
       const registerData = await authService.register({
         name,
@@ -57,6 +60,7 @@ const authController = {
       const { token, ...data } = registerData;
       const { accessToken, refreshToken } = token;
       authController.setRefreshTokenInCookie(res, refreshToken);
+      authService.addRefreshToken(refreshToken, data.id, device);
       return responseUtils.success(res, 200, "user register successfully", {
         ...data,
         token: { accessToken },
@@ -83,8 +87,9 @@ const authController = {
   },
 
   async me(req: Request, res: Response) {
-    const { userId } = req;
-    if (!userId) return responseUtils.error(res, 401, "unauthenticated!");
+    const userId = req.userId;
+    console.log("userId", userId);
+    if (!userId) return responseUtils.error(res, 400, "user id is required!");
     try {
       const dataUser = await userService.findByIdExcPass(userId);
       return responseUtils.success(

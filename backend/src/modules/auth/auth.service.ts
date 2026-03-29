@@ -56,36 +56,24 @@ const authService = {
     });
   },
 
-  async getRefreshTokenByToken(token: string) {
+  async getRefreshTokenByToken(token: string, device: string) {
     validationUtils.requiredValue(token, "token");
-    return await prisma.refreshToken.findUnique({ where: { token } });
+    return await prisma.refreshToken.findUnique({ where: { token, device } });
   },
 
   async revokedRefreshToken(token: string) {
     validationUtils.requiredValue(token, "token");
 
-    await prisma.$transaction(async (tx) => {});
-  },
-
-  // unplug refresh token
-  async unplugRefreshToken(
-    refreshToken: string,
-    userId: string,
-    device: string,
-    tx: Prisma.TransactionClient,
-  ) {
-    const existingRefreshToken = await tx.refreshToken.findUnique({
-      where: {
-        token: refreshToken,
-        user: { id: userId },
-        device,
-      },
-    });
-    if (!existingRefreshToken)
-      throw new NotFoundError("refresh token is not found!");
-    await tx.refreshToken.update({
-      where: { id: existingRefreshToken.id },
-      data: { isRevoked: true },
+    await prisma.$transaction(async (tx) => {
+      const existingRefreshToken = await tx.refreshToken.findUnique({
+        where: { token },
+      });
+      if (!existingRefreshToken)
+        throw new NotFoundError("refresh token not found!");
+      await tx.refreshToken.update({
+        where: { token },
+        data: { isRevoked: true },
+      });
     });
   },
 
@@ -174,7 +162,19 @@ const authService = {
     validationUtils.requiredValue(device, "device");
 
     await prisma.$transaction(async (tx) => {
-      this.unplugRefreshToken(refreshToken, userId, device, tx);
+      const existingRefreshToken = await tx.refreshToken.findUnique({
+        where: {
+          token: refreshToken,
+          userId,
+          device,
+        },
+      });
+      if (!existingRefreshToken)
+        throw new NotFoundError("refresh token is not found!");
+      await tx.refreshToken.update({
+        where: { id: existingRefreshToken.id },
+        data: { isRevoked: true },
+      });
     });
   },
 };
