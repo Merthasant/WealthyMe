@@ -26,7 +26,7 @@ const userController = {
   // get all user
   async getAllUser(req: Request, res: Response) {
     try {
-      const option = requestUtils.getOptionQuerry(req);
+      const option = requestUtils.getOptionQuery(req);
       const userData = await userService.findAll(option);
       return responseUtils.success(
         res,

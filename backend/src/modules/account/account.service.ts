@@ -16,7 +16,7 @@ const accountService = {
   },
 
   // find all
-  async findAll(options: AccountOptionParam) {
+  async findAll(options: AccountOptionParam, userId: string) {
     const {
       page = 1,
       limit = 10,
@@ -27,13 +27,16 @@ const accountService = {
     } = options;
 
     const skip = (page - 1) * limit;
-    const where: accountWhereInput = {};
-    if (search || type) {
-      where.OR = [
-        { name: { contains: search, mode: "insensitive" } },
-        { type: { equals: type } },
-      ];
+    const where: accountWhereInput = { user: { id: userId } };
+    if (search) {
+      if (type !== "all")
+        where.OR = [
+          { name: { contains: search, mode: "insensitive" } },
+          { type: { equals: type } },
+        ];
+      else where.OR = [{ name: { contains: search, mode: "insensitive" } }];
     }
+
     const [accoundData, total] = await prisma.$transaction([
       prisma.account.findMany({
         where,
@@ -72,7 +75,10 @@ const accountService = {
       const existingAccount = await tx.account.findUnique({
         where: { id, user: { id: userId } },
       });
-      if (!existingAccount) throw new NotFoundError("account not found!");
+      if (!existingAccount)
+        throw new NotFoundError(
+          "account not found or this account is not your's!",
+        );
       const container: accountUpdateInput = {
         ...(dto.name && { name: dto.name }),
         ...(dto.type && { type: dto.type }),

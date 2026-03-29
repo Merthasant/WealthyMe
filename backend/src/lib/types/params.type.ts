@@ -7,5 +7,5 @@ export interface OptionParam {
 }
 
 export interface AccountOptionParam extends OptionParam {
-  type?: "cash" | "e_wallet" | "bank" | "investment";
+  type: "cash" | "e_wallet" | "bank" | "investment" | "all";
 }
