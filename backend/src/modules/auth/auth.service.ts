@@ -6,7 +6,6 @@ import jwt from "jsonwebtoken";
 import argon2 from "argon2";
 import { AuthOutput } from "@/lib/types/auth.type";
 import { CreateUserDTO } from "@/lib/types/user.type";
-import { Prisma } from "@/generated/prisma/browser";
 
 const authService = {
   // create access token
@@ -51,7 +50,9 @@ const authService = {
         token,
         isRevoked: false,
         user: { connect: { id: userId } },
-        expiredAt: new Date(Date.now() + jwtUtils.refreshExpiresInMiliSeconds),
+        expiredAt: Math.floor(
+          (Date.now() + jwtUtils.refreshExpiresInMiliSeconds) / 1000,
+        ),
       },
     });
   },

@@ -17,8 +17,8 @@ model user {
   name          String
   email         String         @unique
   password      String
-  createdAt     Int
-  updatedAt     Int
+  createdAt     Int            @default(0)
+  updatedAt     Int            @default(0)
   role          role? // for 1-1 relation
   refreshTokens refreshToken[]
   profile       profile?
@@ -34,8 +34,8 @@ model role {
   name      roles  @default(user)
   userId    String @unique // for 1-1 relation
   user      user   @relation(fields: [userId], references: [id], onDelete: Cascade)
-  createdAt Int
-  updatedAt Int
+  createdAt Int    @default(0)
+  updatedAt Int    @default(0)
 }
 
 // for scalable
@@ -48,8 +48,8 @@ model refreshToken {
   device    String
   userId    String
   user      user    @relation(fields: [userId], references: [id], onDelete: Cascade)
-  createdAt Int
-  updatedAt Int
+  createdAt Int     @default(0)
+  updatedAt Int     @default(0)
 
   @@index([isRevoked])
   @@index([userId])
@@ -64,8 +64,8 @@ model profile {
   timezone    String
   userId      String  @unique
   user        user    @relation(fields: [userId], references: [id], onDelete: Cascade)
-  createdAt   Int
-  updatedAt   Int
+  createdAt   Int     @default(0)
+  updatedAt   Int     @default(0)
 }
 
 enum walletType {
@@ -83,8 +83,8 @@ model account {
   userId  String
   user    user       @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  createdAt    Int
-  updatedAt    Int
+  createdAt    Int           @default(0)
+  updatedAt    Int           @default(0)
   transactions transaction[]
 
   @@index([name])
@@ -104,8 +104,8 @@ model category {
   type         transactionType
   userId       String?
   user         user?           @relation(fields: [userId], references: [id], onDelete: Cascade)
-  createdAt    Int
-  updatedAt    Int
+  createdAt    Int             @default(0)
+  updatedAt    Int             @default(0)
   transactions transaction[]
 
   @@index([userId])
@@ -126,8 +126,8 @@ model transaction {
   account       account         @relation(fields: [accountId], references: [id], onDelete: Cascade)
   categoryId    String
   category      category        @relation(fields: [categoryId], references: [id], onDelete: Restrict)
-  createdAt     Int
-  updatedAt     Int
+  createdAt     Int             @default(0)
+  updatedAt     Int             @default(0)
 
   @@index([updatedAt])
   @@index([categoryId])

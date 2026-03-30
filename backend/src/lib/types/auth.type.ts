@@ -3,7 +3,7 @@ export interface AuthOutput {
   name: string;
   email: string;
   role: "admin" | "user";
-  updatedAt: Date;
+  updatedAt: Number;
   token: {
     accessToken: string;
     refreshToken: string;

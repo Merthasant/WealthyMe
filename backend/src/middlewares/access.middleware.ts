@@ -56,7 +56,9 @@ const accessMiddleware = {
       return responseUtils.error(res, 401, "unauthorized!");
     }
 
-    if (storedToken.expiredAt < new Date()) {
+    const now = Math.floor(Date.now() / 1000); // date in unix
+
+    if (storedToken.expiredAt < now) {
       authService.revokedRefreshToken(refreshToken);
       res.clearCookie("refreshToken");
       return responseUtils.error(
