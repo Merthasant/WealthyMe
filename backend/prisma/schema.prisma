@@ -17,8 +17,8 @@ model user {
   name          String
   email         String         @unique
   password      String
-  createdAt     DateTime       @default(now())
-  updatedAt     DateTime       @updatedAt
+  createdAt     Int
+  updatedAt     Int
   role          role? // for 1-1 relation
   refreshTokens refreshToken[]
   profile       profile?
@@ -30,42 +30,42 @@ model user {
 }
 
 model role {
-  id        String   @id @default(uuid())
-  name      roles    @default(user)
-  userId    String   @unique // for 1-1 relation
-  user      user     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id        String @id @default(uuid())
+  name      roles  @default(user)
+  userId    String @unique // for 1-1 relation
+  user      user   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt Int
+  updatedAt Int
 }
 
 // for scalable
 
 model refreshToken {
-  id        String   @id @default(uuid())
-  token     String   @unique
-  isRevoked Boolean  @default(false)
-  expiredAt DateTime
+  id        String  @id @default(uuid())
+  token     String  @unique
+  isRevoked Boolean @default(false)
+  expiredAt Int
   device    String
   userId    String
-  user      user     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  user      user    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt Int
+  updatedAt Int
 
   @@index([isRevoked])
   @@index([userId])
 }
 
 model profile {
-  id          String    @id @default(uuid())
-  displayName String?   @unique
-  birthDate   DateTime? @db.Date
+  id          String  @id @default(uuid())
+  displayName String? @unique
+  birthDate   Int?
   profession  String?
   avatarUrl   String?
   timezone    String
-  userId      String    @unique
-  user        user      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
+  userId      String  @unique
+  user        user    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt   Int
+  updatedAt   Int
 }
 
 enum walletType {
@@ -83,8 +83,8 @@ model account {
   userId  String
   user    user       @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  createdAt    DateTime      @default(now())
-  updatedAt    DateTime      @updatedAt
+  createdAt    Int
+  updatedAt    Int
   transactions transaction[]
 
   @@index([name])
@@ -104,8 +104,8 @@ model category {
   type         transactionType
   userId       String?
   user         user?           @relation(fields: [userId], references: [id], onDelete: Cascade)
-  createdAt    DateTime        @default(now())
-  updatedAt    DateTime        @updatedAt
+  createdAt    Int
+  updatedAt    Int
   transactions transaction[]
 
   @@index([userId])
@@ -119,15 +119,15 @@ model transaction {
   amount        Decimal         @db.Decimal(15, 2)
   type          transactionType
   note          String?
-  transactionAt DateTime
-  deletedAt     DateTime?
+  transactionAt Int
+  deletedAt     Int?
   receiptUrl    String?
   accountId     String
   account       account         @relation(fields: [accountId], references: [id], onDelete: Cascade)
   categoryId    String
   category      category        @relation(fields: [categoryId], references: [id], onDelete: Restrict)
-  createdAt     DateTime        @default(now())
-  updatedAt     DateTime        @updatedAt
+  createdAt     Int
+  updatedAt     Int
 
   @@index([updatedAt])
   @@index([categoryId])
