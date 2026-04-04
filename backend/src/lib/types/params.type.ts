@@ -15,3 +15,7 @@ export interface TransactionOptionParam extends OptionParam {
   on_date?: number;
   to_date?: number;
 }
+
+export interface CategoryOptionParam extends OptionParam {
+  type?: "income" | "expense" | "all";
+}

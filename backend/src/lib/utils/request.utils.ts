@@ -1,5 +1,9 @@
 import { Request } from "express";
-import { AccountOptionParam, OptionParam } from "@/lib/types/params.type";
+import {
+  AccountOptionParam,
+  CategoryOptionParam,
+  OptionParam,
+} from "@/lib/types/params.type";
 import { ValidationError } from "./error.utils";
 
 function getBaseOption(req: Request): OptionParam {
@@ -29,7 +33,7 @@ type AccountExtra = {
   type: "cash" | "e_wallet" | "bank" | "investment" | "all";
 };
 
-function parseAccountExtra(req: Request): AccountExtra {
+const parseAccountExtra = (req: Request): AccountExtra => {
   const type = req.query.type?.toString();
   if (
     type !== "cash" &&
@@ -43,7 +47,19 @@ function parseAccountExtra(req: Request): AccountExtra {
     );
   }
   return { type };
-}
+};
+
+type CategoryExtra = {
+  type: "income" | "expense" | "all";
+};
+
+const parseCategoryExtra = (req: Request): CategoryExtra => {
+  const type = req.query.type?.toString();
+  if (type !== "income" && type !== "expense" && type !== "all") {
+    throw new ValidationError("category type must be income, expense or all");
+  }
+  return { type };
+};
 
 const requestUtils = {
   getOptionQuery(req: Request): OptionParam {
@@ -52,6 +68,10 @@ const requestUtils = {
 
   getAccountOptionQuery(req: Request): AccountOptionParam {
     return extendOption(req, parseAccountExtra);
+  },
+
+  getCategoryOptionQuery(req: Request): CategoryOptionParam {
+    return extendOption(req, parseCategoryExtra);
   },
 };
 

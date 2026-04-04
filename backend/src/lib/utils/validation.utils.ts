@@ -1,3 +1,4 @@
+import { transactionType } from "@/generated/prisma/enums";
 import { ValidationError } from "./error.utils";
 
 const validationUtils = {
@@ -8,6 +9,11 @@ const validationUtils = {
 
   requiredValue(value: number | string | undefined, valueName: string) {
     if (!value) throw new ValidationError(`${valueName} is required!`);
+  },
+
+  isTransactionType(type: transactionType) {
+    if (type !== "expense" && type !== "income")
+      throw new ValidationError("type must be expense or income!");
   },
 };
 
