@@ -114,6 +114,13 @@ model category {
   @@index([updatedAt])
 }
 
+enum currencyType {
+  IDR
+  USD
+  SGD
+  EUR
+}
+
 model transaction {
   id            String          @id @default(uuid())
   amount        Decimal         @db.Decimal(15, 2)
@@ -122,6 +129,7 @@ model transaction {
   transactionAt Int
   deletedAt     Int?
   receiptUrl    String?
+  currency_code currencyType
   accountId     String
   account       account         @relation(fields: [accountId], references: [id], onDelete: Cascade)
   categoryId    String
