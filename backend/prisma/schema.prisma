@@ -75,13 +75,21 @@ enum walletType {
   investment
 }
 
+enum currencyType {
+  IDR
+  USD
+  SGD
+  EUR
+}
+
 model account {
-  id      String     @id @default(uuid())
-  name    String
-  type    walletType @default(cash)
-  balance Decimal    @db.Decimal(15, 2)
-  userId  String
-  user    user       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id            String       @id @default(uuid())
+  name          String
+  type          walletType   @default(cash)
+  balance       Decimal      @db.Decimal(15, 2)
+  currency_code currencyType
+  userId        String
+  user          user         @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   createdAt    Int           @default(0)
   updatedAt    Int           @default(0)
@@ -112,13 +120,6 @@ model category {
   @@index([type])
   @@index([name])
   @@index([updatedAt])
-}
-
-enum currencyType {
-  IDR
-  USD
-  SGD
-  EUR
 }
 
 model transaction {
