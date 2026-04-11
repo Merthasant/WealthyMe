@@ -49,17 +49,25 @@ const accountController = {
 
   // create account
   async createAccount(req: Request, res: Response) {
-    const { name, type, balance = 0 }: CreateAccountDTO = req.body;
-    if (!name || !type)
+    const {
+      name,
+      type,
+      currency_code,
+      balance = 0,
+    }: CreateAccountDTO = req.body;
+    if (!name || !type || !currency_code)
       return responseUtils.error(
         res,
         400,
-        "name and account type is required!",
+        "name, account type and currency code is required!",
       );
     const userId = req.userId;
     if (!userId) return responseUtils.error(res, 400, "user id is required!");
     try {
-      await accountService.create({ name, type, balance }, userId);
+      await accountService.create(
+        { name, type, balance, currency_code },
+        userId,
+      );
       return responseUtils.success(res, 201, "account created successfully!");
     } catch (err) {
       return catchAllErrors(res, err);
@@ -68,8 +76,8 @@ const accountController = {
 
   // update account
   async updateAccount(req: Request, res: Response) {
-    const { name, type, balance }: UpdateAccountDTO = req.body;
-    if (!name && !type && !balance)
+    const { name, type, balance, currency_code }: UpdateAccountDTO = req.body;
+    if (!name && !type && !balance && !currency_code)
       return responseUtils.error(res, 400, "one data must be required!");
     const id = req.params.id;
     const userId = req.userId;
@@ -77,7 +85,7 @@ const accountController = {
     if (!id) return responseUtils.error(res, 400, "id is required!");
     try {
       await accountService.updateById(
-        { name, type, balance },
+        { name, type, balance, currency_code },
         userId,
         id.toString(),
       );

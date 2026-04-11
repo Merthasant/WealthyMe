@@ -3,6 +3,7 @@ import {
   AccountOptionParam,
   CategoryOptionParam,
   OptionParam,
+  TransactionOptionParam,
 } from "@/lib/types/params.type";
 import { ValidationError } from "./error.utils";
 
@@ -13,11 +14,14 @@ function getBaseOption(req: Request): OptionParam {
   const sortBy = req.query.sortBy?.toString() ?? "updatedAt";
 
   const sortOrderRaw = req.query.sortOrder?.toString();
+  let sortOrder: "asc" | "desc" | undefined = undefined;
   if (sortOrderRaw !== "asc" && sortOrderRaw !== "desc") {
-    throw new ValidationError("sortOrder must be asc or desc");
+    sortOrder = "asc";
+  } else {
+    sortOrder = sortOrderRaw;
   }
 
-  return { page, limit, search, sortBy, sortOrder: sortOrderRaw };
+  return { page, limit, search, sortBy, sortOrder };
 }
 
 function extendOption<T extends Record<string, unknown>>(
@@ -56,9 +60,35 @@ type CategoryExtra = {
 const parseCategoryExtra = (req: Request): CategoryExtra => {
   const type = req.query.type?.toString();
   if (type !== "income" && type !== "expense" && type !== "all") {
-    throw new ValidationError("category type must be income, expense or all");
+    return { type: "all" };
   }
   return { type };
+};
+
+type TransactionExtra = {
+  type?: "income" | "expense" | "all";
+  from_date?: number;
+  to_date?: number;
+};
+
+const parseTransactionExtra = (req: Request): TransactionExtra => {
+  const type = req.query.type?.toString();
+  const from_date_raw = Number(req.query.from_date) ?? undefined;
+  const to_date_raw = Number(req.query.to_date) ?? undefined;
+
+  const from_date = from_date_raw !== 0 ? from_date_raw : undefined;
+  const to_date = to_date_raw !== 0 ? from_date_raw : undefined;
+
+  if (type !== "income" && type !== "expense" && type !== "all") {
+    return { type: "all", from_date, to_date };
+  }
+
+  return { type, from_date, to_date };
+};
+
+type TransactionIdQuery = {
+  accountId?: string;
+  transactionId?: string;
 };
 
 const requestUtils = {
@@ -72,6 +102,15 @@ const requestUtils = {
 
   getCategoryOptionQuery(req: Request): CategoryOptionParam {
     return extendOption(req, parseCategoryExtra);
+  },
+
+  getTransactionOptionQuery(req: Request): TransactionOptionParam {
+    return extendOption(req, parseTransactionExtra);
+  },
+  getTransactionIdQuery(req: Request): TransactionIdQuery {
+    const accountId = req.query.accountId?.toString() ?? undefined;
+    const transactionId = req.query.transactionId?.toString() ?? undefined;
+    return { accountId, transactionId };
   },
 };
 
