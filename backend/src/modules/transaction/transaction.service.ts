@@ -1,5 +1,4 @@
 import { Prisma } from "@/generated/prisma/browser";
-import { transactionWhereInput } from "@/generated/prisma/models";
 import { prisma } from "@/lib/prisma";
 import { TransactionOptionParam } from "@/lib/types/params.type";
 import {
@@ -22,6 +21,19 @@ const defaultDate = (timeZone: string) => {
   return [oneWeekAgo, now];
 };
 
+const transactionSelect: Prisma.transactionSelect = {
+  id: true,
+  amount: true,
+  category: { select: { name: true } },
+  type: true,
+  transactionAt: true,
+  note: true,
+  currency_code: true,
+  receiptUrl: true,
+  createdAt: true,
+  updatedAt: true,
+};
+
 const transactionService = {
   // find by id
   async findById(id: string, accountId: string, userId: string) {
@@ -29,13 +41,16 @@ const transactionService = {
     validationUtils.requiredValue(accountId, "account id");
     validationUtils.requiredValue(userId, "user id");
 
-    return await prisma.transaction.findUnique({
+    const transactionData = await prisma.transaction.findUnique({
       where: {
         id,
         deletedAt: null,
         account: { id: accountId, user: { id: userId } },
       },
+      select: transactionSelect,
     });
+    if (!transactionData) throw new NotFoundError("transaction not found!");
+    return transactionData;
   },
 
   // find all for data table
@@ -45,17 +60,31 @@ const transactionService = {
     userId: string,
   ) {
     return await prisma.$transaction(async (tx) => {
-      const userProfileData = await tx.profile.findUnique({
-        where: { userId },
+      // existing user, profile dan account dengan 1 query
+      const userData = await tx.user.findUnique({
+        where: {
+          id: userId,
+        },
+        select: {
+          id: true,
+          profile: { where: { userId }, select: { timezone: true } },
+          accounts: { where: { id: accountId }, select: { id: true } },
+        },
       });
-      if (!userProfileData) throw new Error("profile not found!");
+      // validtaion user
+      if (!userData) throw new NotFoundError("user not found!");
 
-      const existingAccount = await tx.account.findUnique({
-        where: { id: accountId },
-      });
-      if (!existingAccount) throw new NotFoundError("account not found!");
+      // validation profile
+      const profileData = userData.profile;
+      if (!profileData)
+        throw new NotFoundError("this user don't have a profile!");
 
-      const [oneWeekAgo, now] = defaultDate(userProfileData.timezone);
+      // validation account
+      const accountData = userData.accounts[0];
+      if (!accountData)
+        throw new NotFoundError("account on this user is not found!");
+
+      const [oneWeekAgo, now] = defaultDate(profileData.timezone);
 
       const {
         page = 1,
@@ -82,16 +111,7 @@ const transactionService = {
 
       const [transactionData, total] = await tx.$transaction([
         tx.transaction.findMany({
-          select: {
-            id: true,
-            amount: true,
-            type: true,
-            note: true,
-            transactionAt: true,
-            category: { select: { name: true } },
-            accountId: true,
-            updatedAt: true,
-          },
+          select: transactionSelect,
           where,
           skip,
           take: limit,
@@ -116,18 +136,31 @@ const transactionService = {
     validationUtils.requiredValue(userId, "user id");
     validationUtils.requiredValue(accountId, "account id");
     return await prisma.$transaction(async (tx) => {
-      const userProfileData = await tx.profile.findUnique({
-        where: { userId },
-        select: { timezone: true },
+      // existing user, profile dan account dengan 1 query
+      const userData = await tx.user.findUnique({
+        where: {
+          id: userId,
+        },
+        select: {
+          id: true,
+          profile: { where: { userId }, select: { timezone: true } },
+          accounts: { where: { id: accountId }, select: { id: true } },
+        },
       });
-      if (!userProfileData) throw new NotFoundError("profile not found!");
+      // validtaion user
+      if (!userData) throw new NotFoundError("user not found!");
 
-      const existingAccount = await tx.account.findUnique({
-        where: { id: accountId },
-      });
-      if (!existingAccount) throw new NotFoundError("account not found!");
+      // validation profile
+      const profileData = userData.profile;
+      if (!profileData)
+        throw new NotFoundError("this user don't have a profile!");
 
-      const [oneWeekAgo, now] = defaultDate(userProfileData.timezone);
+      // validation account
+      const accountData = userData.accounts[0];
+      if (!accountData)
+        throw new NotFoundError("account on this user is not found!");
+
+      const [oneWeekAgo, now] = defaultDate(profileData.timezone);
 
       const { from_date = oneWeekAgo, to_date = now } = option;
 
@@ -137,7 +170,12 @@ const transactionService = {
           deletedAt: null,
           transactionAt: { gte: from_date, lte: to_date },
         },
-        select: { amount: true, type: true, transactionAt: true },
+        select: {
+          amount: true,
+          type: true,
+          currency_code: true,
+          transactionAt: true,
+        },
         orderBy: {
           transactionAt: "asc",
         },
@@ -149,21 +187,40 @@ const transactionService = {
   async create(dto: CreateTransactionDTO, accountId: string, userId: string) {
     validationUtils.requiredValue(accountId, "account id");
     return await prisma.$transaction(async (tx) => {
-      const existingAccount = await tx.account.findUnique({
-        where: { id: accountId, user: { id: userId } },
+      // existing user dan account dengan 1 query
+      const userData = await tx.user.findUnique({
+        where: {
+          id: userId,
+        },
+        select: {
+          id: true,
+          accounts: {
+            where: { id: accountId },
+            select: { id: true, balance: true },
+          },
+        },
       });
-      if (!existingAccount) throw new NotFoundError("account not found!");
+      // validtaion user
+      if (!userData) throw new NotFoundError("user not found!");
+
+      // validation account
+      const accountData = userData.accounts[0];
+      if (!accountData)
+        throw new NotFoundError("account on this user is not found!");
 
       const balanceUpdate =
         dto.type === "expense"
-          ? existingAccount.balance.minus(dto.amount)
-          : existingAccount.balance.plus(dto.amount);
+          ? accountData.balance.minus(dto.amount)
+          : accountData.balance.plus(dto.amount);
       await tx.account.update({
-        where: { id: existingAccount.id },
+        where: { id: accountData.id },
         data: { balance: balanceUpdate },
       });
 
-      return tx.transaction.create({ data: { ...dto, accountId } });
+      return tx.transaction.create({
+        data: { ...dto, accountId },
+        select: transactionSelect,
+      });
     });
   },
 
@@ -179,19 +236,42 @@ const transactionService = {
     validationUtils.requiredValue(userId, "user id");
 
     return await prisma.$transaction(async (tx) => {
-      const existingTransaction = await tx.transaction.findUnique({
-        where: { id, account: { id: accountId, user: { id: userId } } },
+      // existing user, account dan transaction dengan 1 query
+      const userData = await tx.user.findUnique({
+        where: {
+          id: userId,
+        },
+        select: {
+          id: true,
+          accounts: {
+            where: { id: accountId },
+            select: {
+              id: true,
+              balance: true,
+              transactions: {
+                where: { id },
+                select: { amount: true, type: true },
+              },
+            },
+          },
+        },
       });
-      if (!existingTransaction)
-        throw new NotFoundError("transaction not found!");
-      const existingAccount = await tx.account.findUnique({
-        where: { id: accountId },
-      });
-      if (!existingAccount) throw new NotFoundError("account not found!");
+      // validtaion user
+      if (!userData) throw new NotFoundError("user not found!");
 
-      let balanceUpdate = existingAccount.balance;
+      // validation account
+      const accountData = userData.accounts[0];
+      if (!accountData)
+        throw new NotFoundError("account on this user is not found!");
+
+      // validation transaction
+      const transactionData = accountData.transactions[0];
+      if (!transactionData)
+        throw new NotFoundError("transaction on this account is not found!");
+
+      let balanceUpdate = accountData.balance;
       const { amount: newAmount, type: newType } = dto;
-      const { amount: oldAmount, type: oldType } = existingTransaction;
+      const { amount: oldAmount, type: oldType } = transactionData;
 
       // Step 1: Reverse transaksi lama, kita anggap transaction lama itu gak ada.
       if (oldType === "expense") {
@@ -221,11 +301,15 @@ const transactionService = {
       };
 
       await tx.account.update({
-        where: { id: existingAccount.id },
+        where: { id: accountData.id },
         data: { balance: balanceUpdate },
       });
 
-      return await tx.transaction.update({ where: { id }, data: container });
+      return await tx.transaction.update({
+        where: { id },
+        data: container,
+        select: transactionSelect,
+      });
     });
   },
 
@@ -234,39 +318,63 @@ const transactionService = {
     validationUtils.requiredValue(id, "id");
     validationUtils.requiredValue(accountId, "account id");
 
-    await prisma.$transaction(async (tx) => {
-      const existingAccount = await tx.account.findUnique({
-        where: { id: accountId, user: { id: userId } },
+    return await prisma.$transaction(async (tx) => {
+      // existing user, profile dan account dengan 1 query
+      const userData = await tx.user.findUnique({
+        where: {
+          id: userId,
+        },
+        select: {
+          id: true,
+          profile: { where: { userId }, select: { timezone: true } },
+          accounts: {
+            where: { id: accountId },
+            select: {
+              id: true,
+              balance: true,
+              transactions: {
+                where: { id },
+                select: { amount: true, type: true },
+              },
+            },
+          },
+        },
       });
-      if (!existingAccount) throw new NotFoundError("account not found!");
+      // validtaion user
+      if (!userData) throw new NotFoundError("user not found!");
 
-      const userProfileData = await tx.profile.findUnique({
-        where: { userId },
-      });
-      if (!userProfileData) throw new NotFoundError("profile not found!");
+      // validation profile
+      const profileData = userData.profile;
+      if (!profileData)
+        throw new NotFoundError("this user don't have a profile!");
 
-      const existingTransaction = await tx.transaction.findUnique({
-        where: { id, account: { id: accountId, user: { id: userId } } },
-      });
-      if (!existingTransaction)
-        throw new NotFoundError("transaction not found!");
+      // validation account
+      const accountData = userData.accounts[0];
+      if (!accountData)
+        throw new NotFoundError("account on this user is not found!");
 
-      const { type, amount } = existingTransaction;
+      // validation transaction
+      const transactionData = accountData.transactions[0];
+      if (!transactionData)
+        throw new NotFoundError("transaction on this account is not found!");
+
+      const { type, amount } = transactionData;
       const balanceUpdate =
         type === "expense"
-          ? existingAccount.balance.plus(amount)
-          : existingAccount.balance.minus(amount);
+          ? accountData.balance.plus(amount)
+          : accountData.balance.minus(amount);
 
       await tx.account.update({
-        where: { id: existingAccount.id },
+        where: { id: accountData.id },
         data: { balance: balanceUpdate },
       });
 
-      const [_, now] = defaultDate(userProfileData.timezone);
+      const [_, now] = defaultDate(profileData.timezone);
 
       return await tx.transaction.update({
         where: { id },
         data: { deletedAt: now },
+        select: transactionSelect,
       });
     });
   },
@@ -278,32 +386,54 @@ const transactionService = {
     validationUtils.requiredValue(userId, "user id");
 
     return await prisma.$transaction(async (tx) => {
-      const existingAccount = await tx.account.findUnique({
-        where: { id: accountId, user: { id: userId } },
+      // existing user, account dan transaction dengan 1 query
+      const userData = await tx.user.findUnique({
+        where: {
+          id: userId,
+        },
+        select: {
+          id: true,
+          accounts: {
+            where: { id: accountId },
+            select: {
+              id: true,
+              balance: true,
+              transactions: {
+                where: { id },
+                select: { id: true, amount: true, type: true },
+              },
+            },
+          },
+        },
       });
-      if (!existingAccount) throw new NotFoundError("account not found!");
+      // validtaion user
+      if (!userData) throw new NotFoundError("user not found!");
 
-      const existingTransaction = await tx.transaction.findUnique({
-        where: { id, account: { id: accountId, user: { id: userId } } },
-      });
+      // validation account
+      const accountData = userData.accounts[0];
+      if (!accountData)
+        throw new NotFoundError("account on this user is not found!");
 
-      if (!existingTransaction)
-        throw new NotFoundError("transaction not found!");
+      // validation transaction
+      const transactionData = accountData.transactions[0];
+      if (!transactionData)
+        throw new NotFoundError("transaction on this account is not found!");
 
-      const { type, amount } = existingTransaction;
+      const { type, amount } = transactionData;
       const balanceUpdate =
         type === "expense"
-          ? existingAccount.balance.minus(amount)
-          : existingAccount.balance.plus(amount);
+          ? accountData.balance.minus(amount)
+          : accountData.balance.plus(amount);
 
       await tx.account.update({
-        where: { id: existingAccount.id },
+        where: { id: accountData.id },
         data: { balance: balanceUpdate },
       });
 
       return await tx.transaction.update({
-        where: { id: existingTransaction.id },
+        where: { id: transactionData.id },
         data: { deletedAt: null },
+        select: transactionSelect,
       });
     });
   },
@@ -315,18 +445,45 @@ const transactionService = {
     validationUtils.requiredValue(userId, "user id");
 
     await prisma.$transaction(async (tx) => {
-      const existingAccount = await tx.account.findUnique({
-        where: { id: accountId, user: { id: userId } },
+      // existing user, account dan transaction dengan 1 query
+      const userData = await tx.user.findUnique({
+        where: {
+          id: userId,
+        },
+        select: {
+          id: true,
+          accounts: {
+            where: { id: accountId },
+            select: {
+              id: true,
+              balance: true,
+              transactions: {
+                where: { id },
+                select: { id: true, deletedAt: true },
+              },
+            },
+          },
+        },
       });
-      if (!existingAccount) throw new NotFoundError("account not found!");
-      const existingTransaction = await tx.transaction.findUnique({
-        where: { id, account: { id: accountId, user: { id: userId } } },
-      });
-      if (!existingTransaction)
-        throw new NotFoundError("transaction not found!");
-      if (!existingTransaction.deletedAt)
+      // validtaion user
+      if (!userData) throw new NotFoundError("user not found!");
+
+      // validation account
+      const accountData = userData.accounts[0];
+      if (!accountData)
+        throw new NotFoundError("account on this user is not found!");
+
+      // validation transaction
+      const transactionData = accountData.transactions[0];
+      if (!transactionData)
+        throw new NotFoundError("transaction on this account is not found!");
+
+      if (!transactionData.deletedAt)
         throw new NotFoundError("transaction not ready to delete!");
-      return await tx.transaction.delete({ where: { id } });
+      return await tx.transaction.delete({
+        where: { id: transactionData.id },
+        select: transactionSelect,
+      });
     });
   },
 };

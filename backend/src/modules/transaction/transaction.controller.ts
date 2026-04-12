@@ -23,18 +23,17 @@ const transactionController = {
         "user id is required, unauthorized!",
       );
     try {
-      const transactionData = await transactionService.findById(
+      const dto = await transactionService.findById(
         id.toString(),
         accountId,
         userId,
       );
-      if (!transactionData)
-        return responseUtils.error(res, 404, "transaction not found!");
+      if (!dto) return responseUtils.error(res, 404, "transaction not found!");
       return responseUtils.success(
         res,
         200,
         "transaction founded successfully",
-        transactionData,
+        dto,
       );
     } catch (err) {
       return catchAllErrors(res, err);
@@ -56,7 +55,7 @@ const transactionController = {
     const { page, limit, search, sortBy, sortOrder, type, from_date, to_date } =
       requestUtils.getTransactionOptionQuery(req);
     try {
-      const transactionData = await transactionService.findAllForDataTable(
+      const dto = await transactionService.findAllForDataTable(
         { page, limit, search, sortBy, sortOrder, type, from_date, to_date },
         accountId,
         userId,
@@ -65,9 +64,9 @@ const transactionController = {
         res,
         200,
         "transactions founded successfully!",
-        transactionData.data,
+        dto.data,
         null,
-        transactionData.meta,
+        dto.meta,
       );
     } catch (err) {
       return catchAllErrors(res, err);
@@ -88,7 +87,7 @@ const transactionController = {
       );
     const { from_date, to_date } = requestUtils.getTransactionOptionQuery(req);
     try {
-      const transactionData = await transactionService.findAllForChart(
+      const dto = await transactionService.findAllForChart(
         { from_date, to_date },
         accountId,
         userId,
@@ -97,7 +96,7 @@ const transactionController = {
         res,
         200,
         "transactions for chart founded successfully!",
-        transactionData,
+        dto,
       );
     } catch (err) {
       return catchAllErrors(res, err);
@@ -129,7 +128,7 @@ const transactionController = {
         "user id is required, unauthorized!",
       );
     try {
-      await transactionService.create(
+      const dto = await transactionService.create(
         {
           amount,
           categoryId,
@@ -147,6 +146,7 @@ const transactionController = {
         res,
         201,
         "transaction created successfully!",
+        dto,
       );
     } catch (err) {
       return catchAllErrors(res, err);
@@ -189,7 +189,7 @@ const transactionController = {
         "user id is required, unauthorized!",
       );
     try {
-      await transactionService.updateById(
+      const dto = await transactionService.updateById(
         {
           amount,
           categoryId,
@@ -207,6 +207,7 @@ const transactionController = {
         res,
         200,
         "transaction updated successfully!",
+        dto,
       );
     } catch (err) {
       return catchAllErrors(res, err);
@@ -227,11 +228,12 @@ const transactionController = {
         "user id is required, unauthorized!",
       );
     try {
-      await transactionService.deleteById(id, accountId, userId);
+      const dto = await transactionService.deleteById(id, accountId, userId);
       return responseUtils.success(
         res,
         200,
         "transaction deleted successfully!",
+        dto,
       );
     } catch (err) {
       return catchAllErrors(res, err);
@@ -252,11 +254,16 @@ const transactionController = {
         "user id is required!, unauthorized!",
       );
     try {
-      await transactionService.restoreTransactionById(id, accountId, userId);
+      const dto = await transactionService.restoreTransactionById(
+        id,
+        accountId,
+        userId,
+      );
       return responseUtils.success(
         res,
         200,
         "transaction restored successfully!",
+        dto,
       );
     } catch (err) {
       return catchAllErrors(res, err);
@@ -277,11 +284,16 @@ const transactionController = {
         "user id is required, unauthorized!",
       );
     try {
-      await transactionService.deletePermanentById(id, accountId, userId);
+      const dto = await transactionService.deletePermanentById(
+        id,
+        accountId,
+        userId,
+      );
       return responseUtils.success(
         res,
         200,
         "transaction deleted permanent successfully!",
+        dto,
       );
     } catch (err) {
       return catchAllErrors(res, err);
