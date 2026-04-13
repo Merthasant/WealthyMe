@@ -15,13 +15,8 @@ const profileController = {
         "user id is required!, unauthorized!",
       );
     try {
-      const profileData = await profileService.findByUserId(userId);
-      return responseUtils.success(
-        res,
-        200,
-        "user founded successfully!",
-        profileData,
-      );
+      const dto = await profileService.findByUserId(userId);
+      return responseUtils.success(res, 200, "user founded successfully!", dto);
     } catch (err) {
       return catchAllErrors(res, err);
     }
@@ -47,11 +42,16 @@ const profileController = {
     if (!timezone)
       return responseUtils.error(res, 400, "timezone is required!");
     try {
-      await profileService.create(
+      const dto = await profileService.create(
         { timezone, avatarUrl, birthDate, displayName, profession },
         userId,
       );
-      return responseUtils.success(res, 201, "profile created successfully");
+      return responseUtils.success(
+        res,
+        201,
+        "profile created successfully",
+        dto,
+      );
     } catch (err) {
       return catchAllErrors(res, err);
     }
@@ -80,12 +80,17 @@ const profileController = {
     if (!timezone && !avatarUrl && !birthDate && !displayName && !profession)
       return responseUtils.error(res, 400, "one data must be required!");
     try {
-      await profileService.updateById(
+      const dto = await profileService.updateById(
         { avatarUrl, birthDate, displayName, profession, timezone },
         id.toString(),
         userId,
       );
-      return responseUtils.success(res, 200, "profile updated successfully!");
+      return responseUtils.success(
+        res,
+        200,
+        "profile updated successfully!",
+        dto,
+      );
     } catch (err) {
       return catchAllErrors(res, err);
     }

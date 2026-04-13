@@ -4,18 +4,40 @@ import { CreateProfileDTO, UpdateProfileDTO } from "@/lib/types/profile.type";
 import { NotFoundError } from "@/lib/utils/error.utils";
 import validationUtils from "@/lib/utils/validation.utils";
 
+const profileSelect: Prisma.profileSelect = {
+  id: true,
+  displayName: true,
+  birthDate: true,
+  avatarUrl: true,
+  profession: true,
+  timezone: true,
+  createdAt: true,
+  updatedAt: true,
+};
+
 const profileService = {
   // find by user id
   async findByUserId(userId: string) {
     validationUtils.requiredValue(userId, "user id");
 
     return await prisma.$transaction(async (tx) => {
-      const existingUser = await tx.user.findUnique({ where: { id: userId } });
-      if (!existingUser) throw new NotFoundError("user not found!");
-
-      const profileData = await tx.profile.findUnique({
-        where: { userId },
+      // ambil data user dan profile dengan 1 query
+      const userData = await tx.user.findUnique({
+        where: { id: userId },
+        select: {
+          id: true,
+          profile: {
+            where: { userId },
+            select: profileSelect,
+          },
+        },
       });
+
+      // validation user
+      if (!userData) throw new NotFoundError("user not found!");
+
+      // validation profile
+      const profileData = userData.profile;
       if (!profileData) throw new NotFoundError("profile not found!");
 
       return profileData;
@@ -26,8 +48,18 @@ const profileService = {
   async create(dto: CreateProfileDTO, userId: string) {
     validationUtils.requiredValue(userId, "user id");
 
-    return await prisma.profile.create({
-      data: { ...dto, user: { connect: { id: userId } } },
+    return await prisma.$transaction(async (tx) => {
+      // validation user
+      const userData = await tx.user.findUnique({
+        where: { id: userId },
+        select: { id: true },
+      });
+      if (!userData) throw new NotFoundError("user not found!");
+
+      return await tx.profile.create({
+        data: { ...dto, user: { connect: { id: userId } } },
+        select: profileSelect,
+      });
     });
   },
 
@@ -37,10 +69,24 @@ const profileService = {
     validationUtils.requiredValue(userId, "user id");
 
     return await prisma.$transaction(async (tx) => {
-      const existingProfile = await tx.profile.findUnique({
-        where: { id, user: { id: userId } },
+      // ambil data user dan profile dengan 1 query
+      const userData = await tx.user.findUnique({
+        where: { id: userId },
+        select: {
+          id: true,
+          profile: {
+            where: { userId },
+            select: { id: true },
+          },
+        },
       });
-      if (!existingProfile) throw new NotFoundError("profile not found!");
+
+      // validation user
+      if (!userData) throw new NotFoundError("user not found!");
+
+      // validation profile
+      const profileData = userData.profile;
+      if (!profileData) throw new NotFoundError("profile not found!");
 
       const container: Prisma.profileUpdateInput = {
         ...(dto.avatarUrl && { avatarUrl: dto.avatarUrl }),
@@ -51,24 +97,43 @@ const profileService = {
       };
 
       return await tx.profile.update({
-        where: { id: existingProfile.id },
+        where: { id: profileData.id },
         data: container,
+        select: profileSelect,
       });
     });
   },
 
+  // belum di pakai, entah dipakai atau enggak
   // delete by id
   async deleteById(id: string, userId: string) {
     validationUtils.requiredValue(id, "id");
     validationUtils.requiredValue(userId, "user id");
 
     return await prisma.$transaction(async (tx) => {
-      const existingProfile = await tx.profile.findUnique({
-        where: { id, user: { id: userId } },
+      // ambil data user dan profile dengan 1 query
+      const userData = await tx.user.findUnique({
+        where: { id: userId },
+        select: {
+          id: true,
+          profile: {
+            where: { userId },
+            select: { id: true },
+          },
+        },
       });
-      if (!existingProfile) throw new NotFoundError("profile not found!");
 
-      return await tx.profile.delete({ where: { id: existingProfile.id } });
+      // validation user
+      if (!userData) throw new NotFoundError("user not found!");
+
+      // validation profile
+      const profileData = userData.profile;
+      if (!profileData) throw new NotFoundError("profile not found!");
+
+      return await tx.profile.delete({
+        where: { id: profileData.id },
+        select: profileSelect,
+      });
     });
   },
 };
