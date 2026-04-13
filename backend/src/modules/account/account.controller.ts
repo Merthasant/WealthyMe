@@ -13,14 +13,12 @@ const accountController = {
     if (!userId) return responseUtils.error(res, 400, "user id is required!");
     if (!id) return responseUtils.error(res, 400, "id is required!");
     try {
-      const accountData = await accountService.findById(id.toString());
-      if (!accountData)
-        return responseUtils.error(res, 404, "account not found!");
+      const dto = await accountService.findById(id.toString(), userId);
       return responseUtils.success(
         res,
         200,
         "account founded successfully!",
-        accountData,
+        dto,
       );
     } catch (err) {
       return catchAllErrors(res, err);
@@ -33,14 +31,14 @@ const accountController = {
     if (!userId) return responseUtils.error(res, 400, "user id is required!");
     const OptionParam = requestUtils.getAccountOptionQuery(req);
     try {
-      const getAccountData = await accountService.findAll(OptionParam, userId);
+      const dto = await accountService.findAll(OptionParam, userId);
       return responseUtils.success(
         res,
         200,
         "all account found successfully",
-        getAccountData.data,
+        dto.data,
         null,
-        getAccountData.meta,
+        dto.meta,
       );
     } catch (err) {
       return catchAllErrors(res, err);
@@ -64,11 +62,16 @@ const accountController = {
     const userId = req.userId;
     if (!userId) return responseUtils.error(res, 400, "user id is required!");
     try {
-      await accountService.create(
+      const dto = await accountService.create(
         { name, type, balance, currency_code },
         userId,
       );
-      return responseUtils.success(res, 201, "account created successfully!");
+      return responseUtils.success(
+        res,
+        201,
+        "account created successfully!",
+        dto,
+      );
     } catch (err) {
       return catchAllErrors(res, err);
     }
@@ -84,12 +87,17 @@ const accountController = {
     if (!userId) return responseUtils.error(res, 400, "user id is required!");
     if (!id) return responseUtils.error(res, 400, "id is required!");
     try {
-      await accountService.updateById(
+      const dto = await accountService.updateById(
         { name, type, balance, currency_code },
         userId,
         id.toString(),
       );
-      return responseUtils.success(res, 200, "account updated successfully!");
+      return responseUtils.success(
+        res,
+        200,
+        "account updated successfully!",
+        dto,
+      );
     } catch (err) {
       return catchAllErrors(res, err);
     }
@@ -102,8 +110,13 @@ const accountController = {
     if (!userId) return responseUtils.error(res, 400, "user id is required!");
     if (!id) return responseUtils.error(res, 400, "id is required!");
     try {
-      await accountService.deleteById(userId, id.toString());
-      return responseUtils.success(res, 200, "account deleted successfully!");
+      const dto = await accountService.deleteById(userId, id.toString());
+      return responseUtils.success(
+        res,
+        200,
+        "account deleted successfully!",
+        dto,
+      );
     } catch (err) {
       return catchAllErrors(res, err);
     }
