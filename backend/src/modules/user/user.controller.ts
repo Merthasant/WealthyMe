@@ -11,13 +11,12 @@ const userController = {
     const id = `${req.params.id}`;
     if (!id) return responseUtils.error(res, 400, "id is required!");
     try {
-      const userData = await userService.findByIdExcPass(id);
-      if (!userData) responseUtils.error(res, 404, "user not found!");
+      const dto = await userService.findByIdExcPass(id);
       return responseUtils.success(
         res,
         200,
         "successfully getting data user",
-        userData,
+        dto,
       );
     } catch (err) {
       return catchAllErrors(res, err);
@@ -25,16 +24,16 @@ const userController = {
   },
   // get all user
   async getAllUser(req: Request, res: Response) {
+    const option = requestUtils.getOptionQuery(req);
     try {
-      const option = requestUtils.getOptionQuery(req);
-      const userData = await userService.findAll(option);
+      const dto = await userService.findAll(option);
       return responseUtils.success(
         res,
         200,
         "successfully getting all user",
-        userData.data,
+        dto.data,
         null,
-        userData.meta,
+        dto.meta,
       );
     } catch (err) {
       return catchAllErrors(res, err);
@@ -47,8 +46,14 @@ const userController = {
     if (!name || !email || !password || !confPassword || !role)
       return responseUtils.error(res, 400, "all data is required!");
     try {
-      await userService.create({ name, email, password, confPassword, role });
-      return responseUtils.success(res, 201, "user created successfully");
+      const dto = await userService.create({
+        name,
+        email,
+        password,
+        confPassword,
+        role,
+      });
+      return responseUtils.success(res, 201, "user created successfully", dto);
     } catch (err) {
       return catchAllErrors(res, err);
     }
@@ -62,14 +67,14 @@ const userController = {
     if (!name && !email && !password && !confPassword && !role)
       return responseUtils.error(res, 400, "one data must be required!");
     try {
-      await userService.updateById(id, {
+      const dto = await userService.updateById(id, {
         name,
         email,
         password,
         confPassword,
         role,
       });
-      return responseUtils.success(res, 200, "user updated successfully");
+      return responseUtils.success(res, 200, "user updated successfully", dto);
     } catch (err) {
       return catchAllErrors(res, err);
     }
@@ -80,8 +85,8 @@ const userController = {
     const id = `${req.params.id}`;
     if (!id) return responseUtils.error(res, 400, "id is required!");
     try {
-      await userService.deleteById(id);
-      return responseUtils.success(res, 200, "user deleted successfuly");
+      const dto = await userService.deleteById(id);
+      return responseUtils.success(res, 200, "user deleted successfuly", dto);
     } catch (err) {
       return catchAllErrors(res, err);
     }
