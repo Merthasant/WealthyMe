@@ -57,13 +57,6 @@ const accountService = {
     const skip = (page - 1) * limit;
 
     return await prisma.$transaction(async (tx) => {
-      // validation user
-      const userData = await tx.user.findUnique({
-        where: { id: userId },
-        select: { id: true },
-      });
-      if (!userData) throw new NotFoundError("user not found!");
-
       const where: Prisma.accountWhereInput = { user: { id: userId } };
       if (search) {
         if (type !== "all")
@@ -74,19 +67,30 @@ const accountService = {
         else where.OR = [{ name: { contains: search, mode: "insensitive" } }];
       }
 
-      const [accoundData, total] = await tx.$transaction([
-        tx.account.findMany({
-          where,
-          skip,
-          take: limit,
-          orderBy: { [sortBy]: sortOrder },
-          select: accountSelect,
+      const [userData, total] = await tx.$transaction([
+        tx.user.findUnique({
+          where: { id: userId },
+          select: {
+            id: true,
+            accounts: {
+              where,
+              skip,
+              take: limit,
+              orderBy: { [sortBy]: sortOrder },
+              select: accountSelect,
+            },
+          },
         }),
         tx.account.count({ where }),
       ]);
 
+      // validation user
+      if (!userData) throw new NotFoundError("user not found!");
+
+      const accountData = userData.accounts;
+
       return {
-        data: accoundData,
+        data: accountData,
         meta: {
           total,
           page,
