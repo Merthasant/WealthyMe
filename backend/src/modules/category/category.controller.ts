@@ -21,15 +21,12 @@ const categoryController = {
         "user id is required!,unauthorized!",
       );
     try {
-      const categoryData = await categoryService.findById(
-        id.toString(),
-        userId,
-      );
+      const dto = await categoryService.findById(id.toString(), userId);
       return responseUtils.success(
         res,
         200,
         "category founded successfully!",
-        categoryData,
+        dto,
       );
     } catch (err) {
       return catchAllErrors(res, err);
@@ -47,17 +44,14 @@ const categoryController = {
       );
     const CategoryParam = requestUtils.getCategoryOptionQuery(req);
     try {
-      const categoryData = await categoryService.findByUserId(
-        CategoryParam,
-        userId,
-      );
+      const dto = await categoryService.findByUserId(CategoryParam, userId);
       return responseUtils.success(
         res,
         200,
         "category founded successfully!",
-        categoryData.data,
+        dto.data,
         null,
-        { ...categoryData.meta },
+        dto.meta,
       );
     } catch (err) {
       return catchAllErrors(res, err);
@@ -77,8 +71,13 @@ const categoryController = {
         "user id is required!,unauthorized!",
       );
     try {
-      await categoryService.create({ name, type }, userId);
-      return responseUtils.success(res, 201, "category created successfully");
+      const dto = await categoryService.create({ name, type }, userId);
+      return responseUtils.success(
+        res,
+        201,
+        "category created successfully",
+        dto,
+      );
     } catch (err) {
       return catchAllErrors(res, err);
     }
@@ -99,8 +98,17 @@ const categoryController = {
         "user id is required!,unauthorized!",
       );
     try {
-      await categoryService.updateById({ name, type }, id.toString(), userId);
-      return responseUtils.success(res, 200, "category updated successfuly");
+      const dto = await categoryService.updateById(
+        { name, type },
+        id.toString(),
+        userId,
+      );
+      return responseUtils.success(
+        res,
+        200,
+        "category updated successfuly",
+        dto,
+      );
     } catch (err) {
       return catchAllErrors(res, err);
     }
@@ -118,8 +126,13 @@ const categoryController = {
         "user id is required!,unauthorized!",
       );
     try {
-      await categoryService.deleteById(id.toString(), userId);
-      return responseUtils.success(res, 200, "category deleted successfully");
+      const dto = await categoryService.deleteById(id.toString(), userId);
+      return responseUtils.success(
+        res,
+        200,
+        "category deleted successfully",
+        dto,
+      );
     } catch (err) {
       return catchAllErrors(res, err);
     }

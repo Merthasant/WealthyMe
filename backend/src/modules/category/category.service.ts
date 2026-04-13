@@ -8,6 +8,14 @@ import { CategoryOptionParam } from "@/lib/types/params.type";
 import { NotFoundError } from "@/lib/utils/error.utils";
 import validationUtils from "@/lib/utils/validation.utils";
 
+const categorySelect: Prisma.categorySelect = {
+  id: true,
+  name: true,
+  type: true,
+  createdAt: true,
+  updatedAt: true,
+};
+
 const categoryService = {
   // find by user id
   async findByUserId(option: CategoryOptionParam, userId: string) {
@@ -23,9 +31,6 @@ const categoryService = {
 
     const skip = (page - 1) * limit;
     return await prisma.$transaction(async (tx) => {
-      const existingUser = await tx.user.findUnique({ where: { id: userId } });
-      if (!existingUser) throw new NotFoundError("user not found!");
-
       const where: Prisma.categoryWhereInput = { userId };
       if (search) {
         if (type !== "all") {
@@ -38,17 +43,28 @@ const categoryService = {
         }
       }
 
-      const [categoryData, total] = await tx.$transaction([
-        tx.category.findMany({
-          where,
-          skip,
-          take: limit,
-          orderBy: {
-            [sortBy]: sortOrder,
+      const [userData, total] = await tx.$transaction([
+        tx.user.findUnique({
+          where: { id: userId },
+          select: {
+            id: true,
+            categories: {
+              where,
+              skip,
+              take: limit,
+              orderBy: {
+                [sortBy]: sortOrder,
+              },
+              select: categorySelect,
+            },
           },
         }),
         tx.category.count({ where }),
       ]);
+      // validation user
+      if (!userData) throw new NotFoundError("user not found!");
+
+      const categoryData = userData.categories;
 
       return {
         data: categoryData,
@@ -68,12 +84,19 @@ const categoryService = {
     validationUtils.requiredValue(userId, "user id");
 
     return await prisma.$transaction(async (tx) => {
-      const existingUser = await tx.user.findUnique({ where: { id: userId } });
-      if (!existingUser) throw new NotFoundError("user not found!");
-
-      const categoryData = await tx.category.findUnique({
-        where: { id, user: { id: userId } },
+      // get user dan category milik user
+      const userData = await tx.user.findUnique({
+        where: { id: userId },
+        select: {
+          id: true,
+          categories: { where: { id }, select: categorySelect },
+        },
       });
+      // validation user
+      if (!userData) throw new NotFoundError("user not found!");
+
+      // validation category
+      const categoryData = userData.categories[0];
       if (!categoryData) throw new NotFoundError("category not found!");
 
       return categoryData;
@@ -85,8 +108,21 @@ const categoryService = {
     validationUtils.requiredValue(userId, "user id");
     validationUtils.isTransactionType(dto.type);
 
-    return await prisma.category.create({
-      data: { ...dto, user: { connect: { id: userId } } },
+    return await prisma.$transaction(async (tx) => {
+      // get user
+      const userData = await tx.user.findUnique({
+        where: { id: userId },
+        select: {
+          id: true,
+        },
+      });
+      // validation user
+      if (!userData) throw new NotFoundError("user not found!");
+
+      return await tx.category.create({
+        data: { ...dto, user: { connect: { id: userId } } },
+        select: categorySelect,
+      });
     });
   },
 
@@ -96,10 +132,20 @@ const categoryService = {
     validationUtils.requiredValue(userId, "user id");
     if (dto.type) validationUtils.isTransactionType(dto.type);
     return await prisma.$transaction(async (tx) => {
-      const existingCategory = await tx.category.findUnique({
-        where: { id, user: { id: userId } },
+      // get user dan category milik user
+      const userData = await tx.user.findUnique({
+        where: { id: userId },
+        select: {
+          id: true,
+          categories: { where: { id }, select: { id: true } },
+        },
       });
-      if (!existingCategory) throw new NotFoundError("category not found!");
+      // validation user
+      if (!userData) throw new NotFoundError("user not found!");
+
+      // validation category
+      const categoryData = userData.categories[0];
+      if (!categoryData) throw new NotFoundError("category not found!");
 
       const container: Prisma.categoryUpdateInput = {
         ...(dto.name && { name: dto.name }),
@@ -107,8 +153,9 @@ const categoryService = {
       };
 
       return await tx.category.update({
-        where: { id: existingCategory.id },
+        where: { id: categoryData.id },
         data: container,
+        select: categorySelect,
       });
     });
   },
@@ -119,12 +166,25 @@ const categoryService = {
     validationUtils.requiredValue(userId, "user id");
 
     return await prisma.$transaction(async (tx) => {
-      const existingCategory = await tx.category.findUnique({
-        where: { id, user: { id: userId } },
+      // get user dan category milik user
+      const userData = await tx.user.findUnique({
+        where: { id: userId },
+        select: {
+          id: true,
+          categories: { where: { id }, select: { id: true } },
+        },
       });
-      if (!existingCategory) throw new NotFoundError("category not found!");
+      // validation user
+      if (!userData) throw new NotFoundError("user not found!");
 
-      return await tx.category.delete({ where: { id: existingCategory.id } });
+      // validation category
+      const categoryData = userData.categories[0];
+      if (!categoryData) throw new NotFoundError("category not found!");
+
+      return await tx.category.delete({
+        where: { id: categoryData.id },
+        select: categorySelect,
+      });
     });
   },
 };
