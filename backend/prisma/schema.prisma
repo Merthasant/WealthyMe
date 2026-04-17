@@ -56,16 +56,17 @@ model refreshToken {
 }
 
 model profile {
-  id          String  @id @default(uuid())
-  displayName String? @unique
-  birthDate   Int?
-  profession  String?
-  avatarUrl   String?
-  timezone    String
-  userId      String  @unique
-  user        user    @relation(fields: [userId], references: [id], onDelete: Cascade)
-  createdAt   Int     @default(0)
-  updatedAt   Int     @default(0)
+  id             String  @id @default(uuid())
+  displayName    String? @unique
+  birthDate      Int?
+  profession     String?
+  avatarUrl      String?
+  avatarPublicId String?
+  timezone       String
+  userId         String  @unique
+  user           user    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt      Int     @default(0)
+  updatedAt      Int     @default(0)
 }
 
 enum walletType {
