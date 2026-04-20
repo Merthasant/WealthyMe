@@ -3,6 +3,7 @@ export interface CreateProfileDTO {
   birthDate?: number;
   profession?: string;
   avatarUrl?: string;
+  avatarPublicId?: string;
   timezone: string;
 }
 export interface UpdateProfileDTO {
@@ -10,5 +11,6 @@ export interface UpdateProfileDTO {
   birthDate?: number;
   profession?: string;
   avatarUrl?: string;
+  avatarPublicId?: string;
   timezone?: string;
 }

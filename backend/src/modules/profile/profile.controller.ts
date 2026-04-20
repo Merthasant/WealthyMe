@@ -3,6 +3,7 @@ import responseUtils from "@/lib/utils/response.utils";
 import { Request, Response } from "express";
 import profileService from "./profile.service";
 import { CreateProfileDTO, UpdateProfileDTO } from "@/lib/types/profile.type";
+import cloudinaryUtils from "@/lib/utils/cloudinary.utils";
 
 const profileController = {
   // get profile
@@ -31,25 +32,62 @@ const profileController = {
         400,
         "user id is required!, unauthorized!",
       );
-
-    const {
-      timezone,
-      avatarUrl,
-      birthDate,
-      displayName,
-      profession,
-    }: CreateProfileDTO = req.body;
+    const { timezone, birthDate, displayName, profession }: CreateProfileDTO =
+      req.body;
     if (!timezone)
       return responseUtils.error(res, 400, "timezone is required!");
     try {
+      let avatarUrl: string | undefined = undefined;
+      let avatarPublicId: string | undefined = undefined;
+
+      const folder = `${process.env.CLOUDINARY_AVATAR_FOLDER}`;
+      if (req.file) {
+        const file = req.file;
+        const result = await cloudinaryUtils.uploadToCloudinary(
+          file.buffer,
+          folder,
+        );
+        avatarUrl = result.secure_url;
+        avatarPublicId = result.public_id;
+      }
+
       const dto = await profileService.create(
-        { timezone, avatarUrl, birthDate, displayName, profession },
+        {
+          timezone,
+          avatarUrl,
+          avatarPublicId,
+          birthDate,
+          displayName,
+          profession,
+        },
         userId,
       );
       return responseUtils.success(
         res,
         201,
         "profile created successfully",
+        dto,
+      );
+    } catch (err) {
+      return catchAllErrors(res, err);
+    }
+  },
+
+  async deleteAvatarOnly(req: Request, res: Response) {
+    const userId = req.userId;
+    if (!userId)
+      return responseUtils.error(
+        res,
+        400,
+        "user id is required!, unauthorized!",
+      );
+
+    try {
+      const dto = await profileService.deleteAvatarOnly(userId);
+      return responseUtils.success(
+        res,
+        200,
+        "Avatar deleted successfully!",
         dto,
       );
     } catch (err) {
@@ -67,22 +105,44 @@ const profileController = {
         "user id is required!, unauthorized!",
       );
 
-    const id = req.params.id;
-    if (!id) return responseUtils.error(res, 400, "profile id is required!");
+    const file = req.file;
 
-    const {
-      timezone,
-      avatarUrl,
-      birthDate,
-      displayName,
-      profession,
-    }: UpdateProfileDTO = req.body;
-    if (!timezone && !avatarUrl && !birthDate && !displayName && !profession)
+    const { timezone, birthDate, displayName, profession }: UpdateProfileDTO =
+      req.body;
+    if (!timezone && !file && !birthDate && !displayName && !profession)
       return responseUtils.error(res, 400, "one data must be required!");
     try {
+      // hapus data avatar lama jika ada file baru yang diupload
+      if (file) {
+        const oldAvatarPublicId =
+          await profileService.getAvatarPublicIdByUserId(userId);
+        if (oldAvatarPublicId) {
+          await cloudinaryUtils.deleteFromCloudinary(oldAvatarPublicId);
+        }
+      }
+
+      let avatarUrl: string | undefined = undefined;
+      let avatarPublicId: string | undefined = undefined;
+
+      const folder = `${process.env.CLOUDINARY_AVATAR_FOLDER}`;
+      if (file) {
+        const result = await cloudinaryUtils.uploadToCloudinary(
+          file.buffer,
+          folder,
+        );
+        avatarUrl = result.secure_url;
+        avatarPublicId = result.public_id;
+      }
+
       const dto = await profileService.updateById(
-        { avatarUrl, birthDate, displayName, profession, timezone },
-        id.toString(),
+        {
+          avatarUrl,
+          avatarPublicId,
+          birthDate,
+          displayName,
+          profession,
+          timezone,
+        },
         userId,
       );
       return responseUtils.success(

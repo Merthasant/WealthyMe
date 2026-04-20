@@ -1,6 +1,7 @@
 import { Prisma } from "@/generated/prisma/browser";
 import { prisma } from "@/lib/prisma";
 import { CreateProfileDTO, UpdateProfileDTO } from "@/lib/types/profile.type";
+import cloudinaryUtils from "@/lib/utils/cloudinary.utils";
 import { NotFoundError } from "@/lib/utils/error.utils";
 import validationUtils from "@/lib/utils/validation.utils";
 
@@ -64,8 +65,7 @@ const profileService = {
   },
 
   // update by id
-  async updateById(dto: UpdateProfileDTO, id: string, userId: string) {
-    validationUtils.requiredValue(id, "id");
+  async updateById(dto: UpdateProfileDTO, userId: string) {
     validationUtils.requiredValue(userId, "user id");
 
     return await prisma.$transaction(async (tx) => {
@@ -90,6 +90,7 @@ const profileService = {
 
       const container: Prisma.profileUpdateInput = {
         ...(dto.avatarUrl && { avatarUrl: dto.avatarUrl }),
+        ...(dto.avatarPublicId && { avatarPublicId: dto.avatarPublicId }),
         ...(dto.birthDate && { birthDate: dto.birthDate }),
         ...(dto.displayName && { displayName: dto.displayName }),
         ...(dto.profession && { profession: dto.profession }),
@@ -99,6 +100,57 @@ const profileService = {
       return await tx.profile.update({
         where: { id: profileData.id },
         data: container,
+        select: profileSelect,
+      });
+    });
+  },
+
+  async getAvatarPublicIdByUserId(userId: string) {
+    validationUtils.requiredValue(userId, "user id");
+
+    const profileData = await prisma.profile.findUnique({
+      where: { userId },
+      select: { avatarPublicId: true },
+    });
+    return profileData?.avatarPublicId;
+  },
+
+  async deleteAvatarOnly(userId: string) {
+    validationUtils.requiredValue(userId, "user id");
+
+    return await prisma.$transaction(async (tx) => {
+      // ambil data user dan profile dengan 1 query
+      const userData = await tx.user.findUnique({
+        where: { id: userId },
+        select: {
+          id: true,
+          profile: {
+            where: { userId },
+            select: { id: true, avatarPublicId: true },
+          },
+        },
+      });
+
+      // validation user
+      if (!userData) throw new NotFoundError("user not found!");
+
+      // validation profile
+      const profileData = userData.profile;
+      if (!profileData) throw new NotFoundError("profile not found!");
+      if (profileData.avatarPublicId) {
+        const result = await cloudinaryUtils.deleteFromCloudinary(
+          profileData.avatarPublicId,
+        );
+        if (!result || result.result === "not found") {
+          throw new NotFoundError(
+            `Avatar not found in Cloudinary: ${profileData.avatarPublicId}`,
+          );
+        }
+      }
+
+      return await tx.profile.update({
+        where: { id: profileData.id },
+        data: { avatarPublicId: null, avatarUrl: null },
         select: profileSelect,
       });
     });
