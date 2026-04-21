@@ -7,6 +7,7 @@ export interface CreateTransactionDTO {
   currency_code: "IDR" | "USD" | "SGD" | "EUR";
   note?: string;
   receiptUrl?: string;
+  receiptPublicId?: string;
 }
 
 export interface UpdateTransactionDTO {
@@ -18,4 +19,5 @@ export interface UpdateTransactionDTO {
   currency_code?: "IDR" | "USD" | "SGD" | "EUR";
   note?: string;
   receiptUrl?: string;
+  receiptPublicId?: string;
 }

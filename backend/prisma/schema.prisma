@@ -124,20 +124,21 @@ model category {
 }
 
 model transaction {
-  id            String          @id @default(uuid())
-  amount        Decimal         @db.Decimal(15, 2)
-  type          transactionType
-  note          String?
-  transactionAt Int
-  deletedAt     Int?
-  receiptUrl    String?
-  currency_code currencyType
-  accountId     String
-  account       account         @relation(fields: [accountId], references: [id], onDelete: Cascade)
-  categoryId    String
-  category      category        @relation(fields: [categoryId], references: [id], onDelete: Restrict)
-  createdAt     Int             @default(0)
-  updatedAt     Int             @default(0)
+  id              String          @id @default(uuid())
+  amount          Decimal         @db.Decimal(15, 2)
+  type            transactionType
+  note            String?
+  transactionAt   Int
+  deletedAt       Int?
+  receiptUrl      String?
+  receiptPublicId String?
+  currency_code   currencyType
+  accountId       String
+  account         account         @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  categoryId      String
+  category        category        @relation(fields: [categoryId], references: [id], onDelete: Restrict)
+  createdAt       Int             @default(0)
+  updatedAt       Int             @default(0)
 
   @@index([updatedAt])
   @@index([categoryId])
