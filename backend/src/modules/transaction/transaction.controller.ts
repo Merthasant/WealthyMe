@@ -108,15 +108,13 @@ const transactionController = {
     const { accountId } = requestUtils.getTransactionIdQuery(req);
     if (!accountId)
       return responseUtils.error(res, 400, "account id is required!");
-    const {
-      amount,
-      categoryId,
-      transactionAt,
-      type,
-      currency_code,
-      note,
-      receiptUrl,
-    }: CreateTransactionDTO = req.body;
+    const amount: number | undefined = Number(req.body.amount);
+    const categoryId: string | undefined = req.body.categoryId;
+    const note: string | undefined = req.body.note;
+    const currency_code: "USD" | "EUR" | "SGD" | "IDR" | undefined =
+      req.body.currency_code;
+    const transactionAt: number | undefined = Number(req.body.transactionAt);
+    const type: "income" | "expense" | undefined = req.body.type;
 
     if (!amount || !categoryId || !transactionAt || !type || !currency_code)
       return responseUtils.error(res, 400, "all data required!");
@@ -127,7 +125,10 @@ const transactionController = {
         400,
         "user id is required, unauthorized!",
       );
+    const file = req.file;
     try {
+      const { receiptUrl, receiptPublicId } =
+        await transactionService.uploadReceipt(file);
       const dto = await transactionService.create(
         {
           amount,
@@ -138,6 +139,7 @@ const transactionController = {
           type,
           note,
           receiptUrl,
+          receiptPublicId,
         },
         accountId,
         userId,
@@ -160,26 +162,39 @@ const transactionController = {
     if (!accountId || !id)
       return responseUtils.error(res, 400, "id and account id is required!");
 
-    const {
-      amount,
-      categoryId,
-      note,
-      currency_code,
-      receiptUrl,
-      transactionAt,
-      type,
-    }: UpdateTransactionDTO = req.body;
+    if (!req.body) {
+      return responseUtils.error(
+        res,
+        400,
+        "at least one data must be required!",
+      );
+    }
+
+    const amount = Number(req.body.amount) ?? undefined;
+    const categoryId: string | undefined = req.body.categoryId;
+    const note: string | undefined = req.body.note;
+    const currency_code: "USD" | "EUR" | "SGD" | "IDR" | undefined =
+      req.body.currency_code;
+    const transactionAt: number | undefined =
+      Number(req.body.transactionAt) ?? undefined;
+    const type: "income" | "expense" | undefined = req.body.type;
+
+    const file = req.file;
 
     if (
       !amount &&
       !categoryId &&
       !note &&
-      !receiptUrl &&
+      !file &&
       !transactionAt &&
       !type &&
       !currency_code
     )
-      return responseUtils.error(res, 400, "one data must be required!");
+      return responseUtils.error(
+        res,
+        400,
+        "at least one data must be required!",
+      );
 
     const userId = req.userId;
     if (!userId)
@@ -189,12 +204,24 @@ const transactionController = {
         "user id is required, unauthorized!",
       );
     try {
+      if (file) {
+        const oldReceipt =
+          await transactionService.getReceiptPublicIdByTransactionId(id);
+        if (oldReceipt) {
+          await transactionService.deleteReceipt(oldReceipt);
+        }
+      }
+
+      const { receiptUrl, receiptPublicId } =
+        await transactionService.uploadReceipt(file);
+
       const dto = await transactionService.updateById(
         {
           amount,
           categoryId,
           note,
           receiptUrl,
+          receiptPublicId,
           currency_code,
           transactionAt,
           type,
@@ -284,6 +311,11 @@ const transactionController = {
         "user id is required, unauthorized!",
       );
     try {
+      // delete receipt in cloudinary jika exist
+      const publicId =
+        await transactionService.getReceiptPublicIdByTransactionId(id);
+      if (publicId) await transactionService.deleteReceipt(publicId);
+
       const dto = await transactionService.deletePermanentById(
         id,
         accountId,

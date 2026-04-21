@@ -105,6 +105,19 @@ const profileService = {
     });
   },
 
+  // upload avatar to cloudinary
+  async uploadAvatar(file: Express.Multer.File | undefined) {
+    const folder = `${process.env.CLOUDINARY_AVATAR_FOLDER}`;
+    if (file) {
+      const result = await cloudinaryUtils.uploadToCloudinary(
+        file.buffer,
+        folder,
+      );
+      return { avatarUrl: result.secure_url, avatarPublicId: result.public_id };
+    }
+    return { avatarUrl: undefined, avatarPublicId: undefined };
+  },
+
   async getAvatarPublicIdByUserId(userId: string) {
     validationUtils.requiredValue(userId, "user id");
 

@@ -5,6 +5,7 @@ import {
   CreateTransactionDTO,
   UpdateTransactionDTO,
 } from "@/lib/types/transaction.type";
+import cloudinaryUtils from "@/lib/utils/cloudinary.utils";
 import { NotFoundError } from "@/lib/utils/error.utils";
 import validationUtils from "@/lib/utils/validation.utils";
 
@@ -181,6 +182,38 @@ const transactionService = {
         },
       });
     });
+  },
+
+  // upload receipt
+  async uploadReceipt(file: Express.Multer.File | undefined) {
+    if (file) {
+      const folder = `${process.env.CLOUDINARY_RECEIPT_FOLDER}`;
+      const result = await cloudinaryUtils.uploadToCloudinary(
+        file.buffer,
+        folder,
+      );
+      const receiptUrl = result.secure_url;
+      const receiptPublicId = result.public_id;
+      return { receiptUrl, receiptPublicId };
+    }
+    return { receiptUrl: undefined, receiptPublicId: undefined };
+  },
+
+  // get receipt public id by transaction id
+  async getReceiptPublicIdByTransactionId(transactionId: string) {
+    const transaction = await prisma.transaction.findUnique({
+      where: { id: transactionId },
+      select: { receiptPublicId: true },
+    });
+    return transaction?.receiptPublicId;
+  },
+
+  // delete receipt
+  async deleteReceipt(publicId: string) {
+    const result = await cloudinaryUtils.deleteFromCloudinary(publicId);
+    if (!result || result.result !== "ok") {
+      throw new Error("failed to delete receipt from cloudinary!");
+    }
   },
 
   // create

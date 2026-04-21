@@ -32,24 +32,19 @@ const profileController = {
         400,
         "user id is required!, unauthorized!",
       );
-    const { timezone, birthDate, displayName, profession }: CreateProfileDTO =
-      req.body;
+
+    const file = req.file;
+
+    const timezone: string | undefined = req.body.timezone;
+    const birthDate: number | undefined =
+      Number(req.body.birthDate) || undefined;
+    const displayName: string | undefined = req.body.displayName;
+    const profession: string | undefined = req.body.profession;
     if (!timezone)
       return responseUtils.error(res, 400, "timezone is required!");
     try {
-      let avatarUrl: string | undefined = undefined;
-      let avatarPublicId: string | undefined = undefined;
-
-      const folder = `${process.env.CLOUDINARY_AVATAR_FOLDER}`;
-      if (req.file) {
-        const file = req.file;
-        const result = await cloudinaryUtils.uploadToCloudinary(
-          file.buffer,
-          folder,
-        );
-        avatarUrl = result.secure_url;
-        avatarPublicId = result.public_id;
-      }
+      const { avatarPublicId, avatarUrl } =
+        await profileService.uploadAvatar(file);
 
       const dto = await profileService.create(
         {
@@ -107,10 +102,26 @@ const profileController = {
 
     const file = req.file;
 
-    const { timezone, birthDate, displayName, profession }: UpdateProfileDTO =
-      req.body;
+    if (!req.body) {
+      return responseUtils.error(
+        res,
+        400,
+        "at least one data must be required!",
+      );
+    }
+
+    const timezone: string | undefined = req.body.timezone;
+    const birthDate: number | undefined =
+      Number(req.body.birthDate) || undefined;
+    const displayName: string | undefined = req.body.displayName;
+    const profession: string | undefined = req.body.profession;
+
     if (!timezone && !file && !birthDate && !displayName && !profession)
-      return responseUtils.error(res, 400, "one data must be required!");
+      return responseUtils.error(
+        res,
+        400,
+        "at least one data must be required!",
+      );
     try {
       // hapus data avatar lama jika ada file baru yang diupload
       if (file) {
@@ -121,18 +132,8 @@ const profileController = {
         }
       }
 
-      let avatarUrl: string | undefined = undefined;
-      let avatarPublicId: string | undefined = undefined;
-
-      const folder = `${process.env.CLOUDINARY_AVATAR_FOLDER}`;
-      if (file) {
-        const result = await cloudinaryUtils.uploadToCloudinary(
-          file.buffer,
-          folder,
-        );
-        avatarUrl = result.secure_url;
-        avatarPublicId = result.public_id;
-      }
+      const { avatarPublicId, avatarUrl } =
+        await profileService.uploadAvatar(file);
 
       const dto = await profileService.updateById(
         {

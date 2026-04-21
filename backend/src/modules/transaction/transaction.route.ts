@@ -1,6 +1,7 @@
 import accessMiddleware from "@/middlewares/access.middleware";
 import express from "express";
 import transactionController from "./transaction.controller";
+import { upload } from "@/middlewares/multer.middleware";
 
 const router = express.Router();
 
@@ -22,11 +23,13 @@ router.get(
 router.post(
   "/",
   accessMiddleware.verifyUser,
+  upload.single("receipt"),
   transactionController.createTransaction,
 );
 router.patch(
   "/update",
   accessMiddleware.verifyUser,
+  upload.single("receipt"),
   transactionController.updateTransaction,
 );
 router.patch(

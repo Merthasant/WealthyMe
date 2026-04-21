@@ -15,7 +15,7 @@ export interface UpdateTransactionDTO {
   type?: "income" | "expense";
   transactionAt?: number;
   deletedAt?: number;
-  categoryId?: number;
+  categoryId?: string;
   currency_code?: "IDR" | "USD" | "SGD" | "EUR";
   note?: string;
   receiptUrl?: string;
