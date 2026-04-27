@@ -2,8 +2,8 @@ import { catchAllErrors } from "@/lib/utils/error.utils";
 import responseUtils from "@/lib/utils/response.utils";
 import { Request, Response } from "express";
 import accountService from "./account.service";
-import requestUtils from "@/lib/utils/request.utils";
 import { CreateAccountDTO, UpdateAccountDTO } from "@/lib/types/account.type";
+import { AccountOptionParams } from "@/lib/types/params.type";
 
 const accountController = {
   // get one account
@@ -29,7 +29,7 @@ const accountController = {
   async getAllAccount(req: Request, res: Response) {
     const userId = req.userId;
     if (!userId) return responseUtils.error(res, 400, "user id is required!");
-    const OptionParam = requestUtils.getAccountOptionQuery(req);
+    const OptionParam = req.validatedQuery as AccountOptionParams;
     try {
       const dto = await accountService.findAll(OptionParam, userId);
       return responseUtils.success(
@@ -52,7 +52,7 @@ const accountController = {
       type,
       currency_code,
       balance = 0,
-    }: CreateAccountDTO = req.body;
+    } = req.validatedBody as CreateAccountDTO;
     if (!name || !type || !currency_code)
       return responseUtils.error(
         res,
@@ -79,7 +79,8 @@ const accountController = {
 
   // update account
   async updateAccount(req: Request, res: Response) {
-    const { name, type, balance, currency_code }: UpdateAccountDTO = req.body;
+    const { name, type, balance, currency_code } =
+      req.validatedBody as UpdateAccountDTO;
     if (!name && !type && !balance && !currency_code)
       return responseUtils.error(res, 400, "one data must be required!");
     const id = req.params.id;
