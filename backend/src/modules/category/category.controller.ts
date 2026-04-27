@@ -2,11 +2,11 @@ import { catchAllErrors } from "@/lib/utils/error.utils";
 import responseUtils from "@/lib/utils/response.utils";
 import { Request, Response } from "express";
 import categoryService from "./category.service";
-import requestUtils from "@/lib/utils/request.utils";
 import {
   CreateCategoryDTO,
   UpdateCategoryDTO,
 } from "@/lib/types/category.type";
+import { CategoryOptionParams } from "@/lib/types/params.type";
 
 const categoryController = {
   // get one category
@@ -42,9 +42,9 @@ const categoryController = {
         400,
         "user id is required!,unauthorized!",
       );
-    const CategoryParam = requestUtils.getCategoryOptionQuery(req);
+    const categoryParam = req.validatedQuery as CategoryOptionParams;
     try {
-      const dto = await categoryService.findByUserId(CategoryParam, userId);
+      const dto = await categoryService.findByUserId(categoryParam, userId);
       return responseUtils.success(
         res,
         200,
@@ -60,7 +60,7 @@ const categoryController = {
 
   // create category
   async createCategory(req: Request, res: Response) {
-    const { name, type }: CreateCategoryDTO = req.body;
+    const { name, type } = req.validatedBody as CreateCategoryDTO;
     if (!name || !type)
       return responseUtils.error(res, 400, "all data is required!");
     const userId = req.userId;
@@ -85,7 +85,7 @@ const categoryController = {
 
   // update category
   async updateCategory(req: Request, res: Response) {
-    const { name, type }: UpdateCategoryDTO = req.body;
+    const { name, type } = req.validatedBody as UpdateCategoryDTO;
     if (!name && !type)
       return responseUtils.error(res, 400, "one data must be required!");
     const id = req.params.id;
