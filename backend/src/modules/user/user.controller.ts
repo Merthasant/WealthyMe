@@ -2,8 +2,8 @@ import { catchAllErrors } from "@/lib/utils/error.utils.js";
 import responseUtils from "@/lib/utils/response.utils.js";
 import { Response, Request } from "express";
 import userService from "./user.service.js";
-import requestUtils from "@/lib/utils/request.utils.js";
 import { CreateUserDTO, UpdateUserDTO } from "@/lib/types/user.type.js";
+import { BaseOptionParams } from "@/lib/types/params.type.js";
 
 const userController = {
   // get one user
@@ -24,7 +24,7 @@ const userController = {
   },
   // get all user
   async getAllUser(req: Request, res: Response) {
-    const option = requestUtils.getOptionQuery(req);
+    const option = req.validatedQuery as BaseOptionParams;
     try {
       const dto = await userService.findAll(option);
       return responseUtils.success(

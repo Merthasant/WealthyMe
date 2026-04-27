@@ -1,6 +1,6 @@
 import { Prisma } from "@/generated/prisma/browser";
 import { prisma } from "@/lib/prisma";
-import { OptionParam } from "@/lib/types/params.type.js";
+import { BaseOptionParams } from "@/lib/types/params.type";
 import { CreateUserDTO, UpdateUserDTO } from "@/lib/types/user.type.js";
 import { NotFoundError, ValidationError } from "@/lib/utils/error.utils.js";
 import validationUtils from "@/lib/utils/validation.utils.js";
@@ -35,7 +35,7 @@ const userSelectIncPass: Prisma.userSelect = {
 
 const userService = {
   // find all
-  async findAll(option: OptionParam) {
+  async findAll(option: BaseOptionParams) {
     const {
       page = 1,
       limit = 10,
@@ -126,7 +126,7 @@ const userService = {
     // validation user
     if (!userData) throw new NotFoundError("user not found!");
 
-    return;
+    return userData;
   },
 
   // create
