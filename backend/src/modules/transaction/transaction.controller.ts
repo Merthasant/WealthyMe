@@ -2,7 +2,10 @@ import { catchAllErrors } from "@/lib/utils/error.utils";
 import responseUtils from "@/lib/utils/response.utils";
 import { Request, Response } from "express";
 import transactionService from "./transaction.service";
-import requestUtils from "@/lib/utils/request.utils";
+import {
+  TransactionIdQuery,
+  TransactionOptionParams,
+} from "@/lib/types/params.type";
 import {
   CreateTransactionDTO,
   UpdateTransactionDTO,
@@ -12,7 +15,7 @@ const transactionController = {
   // get one transaction
   async getOneTransaction(req: Request, res: Response) {
     const { accountId, transactionId: id } =
-      requestUtils.getTransactionIdQuery(req);
+      req.validatedQuery as TransactionIdQuery;
     if (!accountId || !id)
       return responseUtils.error(res, 400, "id and account id is required!");
     const userId = req.userId;
@@ -28,7 +31,6 @@ const transactionController = {
         accountId,
         userId,
       );
-      if (!dto) return responseUtils.error(res, 404, "transaction not found!");
       return responseUtils.success(
         res,
         200,
@@ -42,7 +44,7 @@ const transactionController = {
 
   // get transaction data table
   async getTransactionDataTable(req: Request, res: Response) {
-    const { accountId } = requestUtils.getTransactionIdQuery(req);
+    const { accountId } = req.validatedQuery as TransactionIdQuery;
     if (!accountId)
       return responseUtils.error(res, 400, "account id is required!");
     const userId = req.userId;
@@ -52,11 +54,11 @@ const transactionController = {
         400,
         "user id is required, unauthorized!",
       );
-    const { page, limit, search, sortBy, sortOrder, type, from_date, to_date } =
-      requestUtils.getTransactionOptionQuery(req);
+    const transactionDataTableOptions =
+      req.validatedQuery as TransactionOptionParams;
     try {
       const dto = await transactionService.findAllForDataTable(
-        { page, limit, search, sortBy, sortOrder, type, from_date, to_date },
+        transactionDataTableOptions,
         accountId,
         userId,
       );
@@ -75,7 +77,7 @@ const transactionController = {
 
   // get transaction chart
   async getTransactionChart(req: Request, res: Response) {
-    const { accountId } = requestUtils.getTransactionIdQuery(req);
+    const { accountId } = req.validatedQuery as TransactionIdQuery;
     if (!accountId)
       return responseUtils.error(res, 400, "account id is required!");
     const userId = req.userId;
@@ -85,10 +87,11 @@ const transactionController = {
         400,
         "user id is required, unauthorized!",
       );
-    const { from_date, to_date } = requestUtils.getTransactionOptionQuery(req);
+    const transactionChartOptions =
+      req.validatedQuery as TransactionOptionParams;
     try {
       const dto = await transactionService.findAllForChart(
-        { from_date, to_date },
+        transactionChartOptions,
         accountId,
         userId,
       );
@@ -105,16 +108,11 @@ const transactionController = {
 
   // create transaction
   async createTransaction(req: Request, res: Response) {
-    const { accountId } = requestUtils.getTransactionIdQuery(req);
+    const { accountId } = req.validatedQuery as TransactionIdQuery;
     if (!accountId)
       return responseUtils.error(res, 400, "account id is required!");
-    const amount: number | undefined = Number(req.body.amount);
-    const categoryId: string | undefined = req.body.categoryId;
-    const note: string | undefined = req.body.note;
-    const currency_code: "USD" | "EUR" | "SGD" | "IDR" | undefined =
-      req.body.currency_code;
-    const transactionAt: number | undefined = Number(req.body.transactionAt);
-    const type: "income" | "expense" | undefined = req.body.type;
+    const { amount, categoryId, type, currency_code, note, transactionAt } =
+      req.validatedBody as CreateTransactionDTO;
 
     if (!amount || !categoryId || !transactionAt || !type || !currency_code)
       return responseUtils.error(res, 400, "all data required!");
@@ -133,7 +131,6 @@ const transactionController = {
         {
           amount,
           categoryId,
-          deletedAt: null,
           transactionAt,
           currency_code,
           type,
@@ -158,7 +155,7 @@ const transactionController = {
   // update transaction
   async updateTransaction(req: Request, res: Response) {
     const { accountId, transactionId: id } =
-      requestUtils.getTransactionIdQuery(req);
+      req.validatedQuery as TransactionIdQuery;
     if (!accountId || !id)
       return responseUtils.error(res, 400, "id and account id is required!");
 
@@ -170,14 +167,8 @@ const transactionController = {
       );
     }
 
-    const amount = Number(req.body.amount) ?? undefined;
-    const categoryId: string | undefined = req.body.categoryId;
-    const note: string | undefined = req.body.note;
-    const currency_code: "USD" | "EUR" | "SGD" | "IDR" | undefined =
-      req.body.currency_code;
-    const transactionAt: number | undefined =
-      Number(req.body.transactionAt) ?? undefined;
-    const type: "income" | "expense" | undefined = req.body.type;
+    const { amount, categoryId, note, transactionAt, type, currency_code } =
+      req.validatedBody as UpdateTransactionDTO;
 
     const file = req.file;
 
@@ -241,10 +232,50 @@ const transactionController = {
     }
   },
 
+  // delete receipt only
+  async deleteReceiptOnly(req: Request, res: Response) {
+    const { accountId, transactionId: id } =
+      req.validatedQuery as TransactionIdQuery;
+    if (!accountId || !id)
+      return responseUtils.error(res, 400, "id and account id is required!");
+    const userId = req.userId;
+    if (!userId)
+      return responseUtils.error(
+        res,
+        400,
+        "user id is required, unauthorized!",
+      );
+    try {
+      const oldReceipt =
+        await transactionService.getReceiptPublicIdByTransactionId(id);
+      if (!oldReceipt) {
+        return responseUtils.error(res, 404, "receipt not found!");
+      }
+      await transactionService.deleteReceipt(oldReceipt);
+      const dto = await transactionService.updateById(
+        {
+          receiptUrl: undefined,
+          receiptPublicId: undefined,
+        },
+        id,
+        accountId,
+        userId,
+      );
+      return responseUtils.success(
+        res,
+        200,
+        "receipt deleted successfully!",
+        dto,
+      );
+    } catch (err) {
+      return catchAllErrors(res, err);
+    }
+  },
+
   // delete transaction
   async deleteTransaction(req: Request, res: Response) {
     const { accountId, transactionId: id } =
-      requestUtils.getTransactionIdQuery(req);
+      req.validatedQuery as TransactionIdQuery;
     if (!accountId || !id)
       return responseUtils.error(res, 400, "id and account id is required!");
     const userId = req.userId;
@@ -270,7 +301,7 @@ const transactionController = {
   // restore transaction
   async restoreTransaction(req: Request, res: Response) {
     const { accountId, transactionId: id } =
-      requestUtils.getTransactionIdQuery(req);
+      req.validatedQuery as TransactionIdQuery;
     if (!accountId || !id)
       return responseUtils.error(res, 400, "id and account id is required!");
     const userId = req.userId;
@@ -299,8 +330,7 @@ const transactionController = {
 
   // delete permanent transaction
   async deletePermanentTransaction(req: Request, res: Response) {
-    const { accountId, transactionId: id } =
-      requestUtils.getTransactionIdQuery(req);
+    const { accountId, transactionId: id } = req.query as TransactionIdQuery;
     if (!accountId || !id)
       return responseUtils.error(res, 400, "id and account id is required!");
     const userId = req.userId;

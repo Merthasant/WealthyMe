@@ -1,6 +1,9 @@
 import { Prisma } from "@/generated/prisma/browser";
 import { prisma } from "@/lib/prisma";
-import { TransactionOptionParam } from "@/lib/types/params.type";
+import {
+  TransactionChartOptionParams,
+  TransactionOptionParams,
+} from "@/lib/types/params.type";
 import {
   CreateTransactionDTO,
   UpdateTransactionDTO,
@@ -56,7 +59,7 @@ const transactionService = {
 
   // find all for data table
   async findAllForDataTable(
-    option: TransactionOptionParam,
+    option: TransactionOptionParams,
     accountId: string,
     userId: string,
   ) {
@@ -130,7 +133,7 @@ const transactionService = {
 
   // find all for chart
   async findAllForChart(
-    option: TransactionOptionParam,
+    option: TransactionChartOptionParams,
     accountId: string,
     userId: string,
   ) {
