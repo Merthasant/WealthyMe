@@ -5,6 +5,7 @@ import responseUtils from "@/lib/utils/response.utils";
 import { Request, Response } from "express";
 import authService from "./auth.service";
 import userService from "../user/user.service";
+import { LoginDTO, RegisterDTO } from "@/lib/types/auth.type";
 
 declare global {
   namespace Express {
@@ -26,7 +27,7 @@ const authController = {
   },
 
   async login(req: Request, res: Response) {
-    const { email, password } = req.body;
+    const { email, password } = req.validatedBody as LoginDTO;
     if (!email || !password)
       return responseUtils.error(res, 400, "email or password is required!");
     const device = req.headers["user-agent"] ?? "unknown";
@@ -45,7 +46,8 @@ const authController = {
     }
   },
   async register(req: Request, res: Response) {
-    const { name, email, password, confPassword, role } = req.body;
+    const { name, email, password, confPassword, role } =
+      req.validatedBody as RegisterDTO;
     if (!name || !email || !password || !confPassword || !role)
       return responseUtils.error(res, 400, "email or password is required!");
     const device = req.headers["user-agent"] ?? "unknown";
