@@ -1,16 +1,18 @@
-export interface CreateProfileDTO {
-  displayName?: string;
-  birthDate?: number;
-  profession?: string;
-  avatarUrl?: string;
-  avatarPublicId?: string;
-  timezone: string;
-}
-export interface UpdateProfileDTO {
-  displayName?: string;
-  birthDate?: number;
-  profession?: string;
-  avatarUrl?: string;
-  avatarPublicId?: string;
-  timezone?: string;
-}
+import z from "zod";
+
+export const createProfileSchema = z.object({
+  displayName: z.string().optional(),
+  birthDate: z.coerce
+    .number()
+    .max(Number.MAX_SAFE_INTEGER, { message: "Invalid birth date" })
+    .optional(),
+  profession: z.string().optional(),
+  avatarUrl: z.string().optional(),
+  avatarPublicId: z.string().optional(),
+  timezone: z.string({ message: "timezone is required" }),
+});
+
+export const updateProfileSchema = createProfileSchema.partial();
+
+export type CreateProfileDTO = z.infer<typeof createProfileSchema>;
+export type UpdateProfileDTO = z.infer<typeof updateProfileSchema>;

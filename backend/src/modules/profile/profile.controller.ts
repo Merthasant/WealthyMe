@@ -35,11 +35,8 @@ const profileController = {
 
     const file = req.file;
 
-    const timezone: string | undefined = req.body.timezone;
-    const birthDate: number | undefined =
-      Number(req.body.birthDate) || undefined;
-    const displayName: string | undefined = req.body.displayName;
-    const profession: string | undefined = req.body.profession;
+    const { displayName, birthDate, timezone, profession } =
+      req.validatedBody as CreateProfileDTO;
     if (!timezone)
       return responseUtils.error(res, 400, "timezone is required!");
     try {
@@ -110,11 +107,8 @@ const profileController = {
       );
     }
 
-    const timezone: string | undefined = req.body.timezone;
-    const birthDate: number | undefined =
-      Number(req.body.birthDate) || undefined;
-    const displayName: string | undefined = req.body.displayName;
-    const profession: string | undefined = req.body.profession;
+    const { timezone, birthDate, displayName, profession } =
+      req.validatedBody as UpdateProfileDTO;
 
     if (!timezone && !file && !birthDate && !displayName && !profession)
       return responseUtils.error(
