@@ -2,7 +2,10 @@ import accessMiddleware from "@/middlewares/access.middleware.js";
 import express from "express";
 import accountController from "./account.controller.js";
 import validationMiddleware from "@/middlewares/validation.middleware.js";
-import { createAccountSchema } from "@/lib/types/account.type.js";
+import {
+  createAccountSchema,
+  updateAccountSchema,
+} from "@/lib/types/account.type.js";
 import { accountOptionSchema } from "@/lib/types/params.type.js";
 
 const router = express.Router();
@@ -27,6 +30,7 @@ router.get(
 router.patch(
   "/:id",
   accessMiddleware.verifyUser,
+  validationMiddleware.validateBody(updateAccountSchema),
   accountController.updateAccount,
 );
 router.delete(
