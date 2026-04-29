@@ -5,10 +5,11 @@ export const createAccountSchema = z.object({
     .string({ message: "name is required" })
     .min(2, { message: "name must be at least 2 characters" }),
   type: z.enum(["cash", "e_wallet", "bank", "investment"], {
-    message: "Invalid account type",
+    message:
+      "account type must be either 'cash', 'e_wallet', 'bank' or 'investment'",
   }),
   currency_code: z.enum(["IDR", "USD", "SGD", "EUR"], {
-    message: "Invalid currency code",
+    message: "currency code must be either 'IDR','USD','SGD' or 'EUR'",
   }),
   balance: z.coerce.number().default(0),
 });
