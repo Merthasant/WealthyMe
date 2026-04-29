@@ -42,7 +42,7 @@ const validationMiddleware = {
             res,
             400,
             "validation error",
-            z.treeifyError(result.error),
+            z.treeifyError(result.error).errors,
           );
         }
         req.validatedQuery = result.data;
