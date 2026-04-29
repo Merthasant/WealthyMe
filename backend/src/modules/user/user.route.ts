@@ -11,6 +11,7 @@ router.get(
   "/",
   accessMiddleware.verifyUser,
   accessMiddleware.isAdmin,
+  validationMiddleware.validateQuery(baseOptionSchema),
   userController.getAllUser,
 );
 router.get(
@@ -23,7 +24,6 @@ router.post(
   "/",
   accessMiddleware.verifyUser,
   accessMiddleware.isAdmin,
-  validationMiddleware.validateQuery(baseOptionSchema),
   validationMiddleware.validateBody(createUserSchema),
   userController.createUser,
 );
