@@ -5,7 +5,7 @@ export const createTransactionSchema = z.object({
   type: z.enum(["income", "expense"], {
     message: "type must be either 'income' or 'expense'",
   }),
-  transactionAt: z.coerce.number().int().min(1).max(Number.MAX_SAFE_INTEGER, {
+  transactionAt: z.coerce.number().int().min(1).max(2_147_483_647, {
     message:
       "transactionAt must be a valid timestamp in milliseconds on int32 range",
   }),
@@ -13,7 +13,7 @@ export const createTransactionSchema = z.object({
     .number()
     .int()
     .min(1)
-    .max(Number.MAX_SAFE_INTEGER, {
+    .max(2_147_483_647, {
       message:
         "deletedAt must be a valid timestamp in milliseconds on int32 range",
     })

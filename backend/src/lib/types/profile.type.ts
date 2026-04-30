@@ -4,7 +4,8 @@ export const createProfileSchema = z.object({
   displayName: z.string().optional(),
   birthDate: z.coerce
     .number()
-    .max(Number.MAX_SAFE_INTEGER, { message: "Invalid birth date" })
+    .int()
+    .max(2_147_483_647, { message: "Invalid birth date" })
     .optional(),
   profession: z.string().optional(),
   avatarUrl: z.string().optional(),
