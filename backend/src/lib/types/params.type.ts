@@ -31,8 +31,8 @@ export const transactionChartOptionSchema = transactionOptionSchema.pick({
 });
 
 export const transactionIdQuerySchema = z.object({
-  accountId: z.string({ message: "accountId is required" }),
-  transactionId: z.string({ message: "transactionId is required" }),
+  accountId: z.string().optional(),
+  transactionId: z.string().optional(),
 });
 
 export type BaseOptionParams = z.infer<typeof baseOptionSchema>;
