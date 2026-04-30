@@ -75,7 +75,6 @@ const accessMiddleware = {
       ) as jwt.JwtPayload;
       req.userId = accessDecoded.id;
       req.role = accessDecoded.role;
-      console.log({ userId: req.userId, role: req.role });
     } catch (err) {
       if (err instanceof jwt.TokenExpiredError) {
         const newAccessToken = authService.createAccessToken(
