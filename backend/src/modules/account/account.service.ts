@@ -1,7 +1,8 @@
 import { Prisma } from "@/generated/prisma/browser";
 import { prisma } from "@/lib/prisma";
 import { CreateAccountDTO, UpdateAccountDTO } from "@/lib/types/account.type";
-import { AccountOptionParam } from "@/lib/types/params.type";
+import { AccountOptionParams } from "@/lib/types/params.type";
+import { convertCurrency } from "@/lib/utils/currency.utils";
 import { NotFoundError } from "@/lib/utils/error.utils";
 import validationUtils from "@/lib/utils/validation.utils";
 
@@ -43,7 +44,7 @@ const accountService = {
   },
 
   // find all
-  async findAll(options: AccountOptionParam, userId: string) {
+  async findAll(options: AccountOptionParams, userId: string) {
     validationUtils.requiredValue(userId, "user id");
     const {
       page = 1,
@@ -131,7 +132,10 @@ const accountService = {
         where: { id: userId },
         select: {
           id: true,
-          accounts: { where: { id }, select: { id: true } },
+          accounts: {
+            where: { id },
+            select: { id: true, balance: true, currency_code: true },
+          },
         },
       });
       // validation user
@@ -142,10 +146,33 @@ const accountService = {
       if (!accountData)
         throw new NotFoundError("account on this user is not found!");
 
+      const { balance: oldBalance, currency_code: oldCurrency } = accountData;
+
+      const effectiveBalance = dto.balance ?? oldBalance.toNumber();
+      const effectiveCurrency = dto.currency_code ?? oldCurrency;
+
+      let handleBalanceUpdate = false;
+      if (dto.balance !== undefined) handleBalanceUpdate = true;
+      let convertedBalance: number = effectiveBalance;
+      // jika balance tidak diupdate tapi currency_code diupdate, maka convert balance ke currency_code baru
+      if (dto.balance === undefined && dto.currency_code !== undefined)
+        if (effectiveCurrency !== oldCurrency) {
+          // hanya convert jika currency_code diupdate, jika balance diupdate maka diasumsikan balance sudah sesuai dengan currency_code yang diupdate
+          convertedBalance = convertCurrency(
+            effectiveBalance,
+            oldCurrency,
+            effectiveCurrency,
+          );
+          handleBalanceUpdate = true;
+        }
+
       const container: Prisma.accountUpdateInput = {
-        ...(dto.name && { name: dto.name }),
-        ...(dto.type && { type: dto.type }),
-        ...(dto.balance && { balance: dto.balance }),
+        ...(dto.name !== undefined && { name: dto.name }),
+        ...(dto.type !== undefined && { type: dto.type }),
+        ...(dto.currency_code !== undefined && {
+          currency_code: dto.currency_code,
+        }),
+        ...(handleBalanceUpdate && { balance: convertedBalance }),
       };
 
       return await tx.account.update({
