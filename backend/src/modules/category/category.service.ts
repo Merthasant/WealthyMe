@@ -4,7 +4,7 @@ import {
   CreateCategoryDTO,
   UpdateCategoryDTO,
 } from "@/lib/types/category.type";
-import { CategoryOptionParam } from "@/lib/types/params.type";
+import { CategoryOptionParams } from "@/lib/types/params.type";
 import { NotFoundError } from "@/lib/utils/error.utils";
 import validationUtils from "@/lib/utils/validation.utils";
 
@@ -18,7 +18,7 @@ const categorySelect: Prisma.categorySelect = {
 
 const categoryService = {
   // find by user id
-  async findByUserId(option: CategoryOptionParam, userId: string) {
+  async findByUserId(option: CategoryOptionParams, userId: string) {
     validationUtils.requiredValue(userId, "user id");
     const {
       page = 1,
@@ -130,7 +130,7 @@ const categoryService = {
   async updateById(dto: UpdateCategoryDTO, id: string, userId: string) {
     validationUtils.requiredValue(id, "id");
     validationUtils.requiredValue(userId, "user id");
-    if (dto.type) validationUtils.isTransactionType(dto.type);
+    if (dto.type !== undefined) validationUtils.isTransactionType(dto.type);
     return await prisma.$transaction(async (tx) => {
       // get user dan category milik user
       const userData = await tx.user.findUnique({
@@ -148,8 +148,8 @@ const categoryService = {
       if (!categoryData) throw new NotFoundError("category not found!");
 
       const container: Prisma.categoryUpdateInput = {
-        ...(dto.name && { name: dto.name }),
-        ...(dto.type && { type: dto.type }),
+        ...(dto.name !== undefined && { name: dto.name }),
+        ...(dto.type !== undefined && { type: dto.type }),
       };
 
       return await tx.category.update({

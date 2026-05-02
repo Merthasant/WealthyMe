@@ -5,6 +5,7 @@ import { upload } from "@/middlewares/multer.middleware";
 import validationMiddleware from "@/middlewares/validation.middleware";
 import {
   transactionChartOptionSchema,
+  transactionIdQuerySchema,
   transactionOptionSchema,
 } from "@/lib/types/params.type";
 import {
@@ -35,6 +36,7 @@ router.post(
   "/",
   accessMiddleware.verifyUser,
   upload.single("receipt"),
+  validationMiddleware.validateQuery(transactionIdQuerySchema),
   validationMiddleware.validateBody(createTransactionSchema),
   transactionController.createTransaction,
 );
@@ -42,6 +44,7 @@ router.patch(
   "/",
   accessMiddleware.verifyUser,
   upload.single("receipt"),
+  validationMiddleware.validateQuery(transactionIdQuerySchema),
   validationMiddleware.validateBody(updateTransactionSchema),
   transactionController.updateTransaction,
 );
@@ -53,11 +56,13 @@ router.delete(
 router.delete(
   "/",
   accessMiddleware.verifyUser,
+  validationMiddleware.validateQuery(transactionIdQuerySchema),
   transactionController.deleteTransaction,
 );
 router.patch(
   "/restore",
   accessMiddleware.verifyUser,
+  validationMiddleware.validateQuery(transactionIdQuerySchema),
   transactionController.restoreTransaction,
 );
 router.delete(

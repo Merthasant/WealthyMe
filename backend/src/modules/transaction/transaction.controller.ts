@@ -195,12 +195,15 @@ const transactionController = {
         "user id is required, unauthorized!",
       );
     try {
-      if (file) {
-        const oldReceipt =
-          await transactionService.getReceiptPublicIdByTransactionId(id);
-        if (oldReceipt) {
-          await transactionService.deleteReceipt(oldReceipt);
-        }
+      const oldReceipt =
+        await transactionService.getReceiptPublicIdByTransactionId(id);
+      if (oldReceipt) {
+        await transactionService.deleteReceipt(
+          oldReceipt,
+          accountId,
+          id,
+          userId,
+        );
       }
 
       const { receiptUrl, receiptPublicId } =
@@ -251,7 +254,7 @@ const transactionController = {
       if (!oldReceipt) {
         return responseUtils.error(res, 404, "receipt not found!");
       }
-      await transactionService.deleteReceipt(oldReceipt);
+      await transactionService.deleteReceipt(oldReceipt, accountId, id, userId);
       const dto = await transactionService.updateById(
         {
           receiptUrl: undefined,
@@ -341,16 +344,18 @@ const transactionController = {
         "user id is required, unauthorized!",
       );
     try {
-      // delete receipt in cloudinary jika exist
-      const publicId =
-        await transactionService.getReceiptPublicIdByTransactionId(id);
-      if (publicId) await transactionService.deleteReceipt(publicId);
-
       const dto = await transactionService.deletePermanentById(
         id,
         accountId,
         userId,
       );
+
+      // delete receipt in cloudinary jika exist
+      const publicId =
+        await transactionService.getReceiptPublicIdByTransactionId(id);
+      if (publicId)
+        await transactionService.deleteReceipt(publicId, accountId, id, userId);
+
       return responseUtils.success(
         res,
         200,

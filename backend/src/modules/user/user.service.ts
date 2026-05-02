@@ -178,10 +178,10 @@ const userService = {
       }
 
       const userUpdateInput: Prisma.userUpdateInput = {
-        ...(name && { name }),
-        ...(email && { email }),
-        ...(hashed && { password: hashed }),
-        ...(role && { role: { update: { name: role } } }),
+        ...(name !== undefined && { name }),
+        ...(email !== undefined && { email }),
+        ...(hashed !== undefined && { password: hashed }),
+        ...(role !== undefined && { role: { update: { name: role } } }),
       };
 
       return await tx.user.update({

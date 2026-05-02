@@ -9,6 +9,7 @@ import {
   UpdateTransactionDTO,
 } from "@/lib/types/transaction.type";
 import cloudinaryUtils from "@/lib/utils/cloudinary.utils";
+import { convertCurrency } from "@/lib/utils/currency.utils";
 import { NotFoundError } from "@/lib/utils/error.utils";
 import validationUtils from "@/lib/utils/validation.utils";
 
@@ -212,11 +213,56 @@ const transactionService = {
   },
 
   // delete receipt
-  async deleteReceipt(publicId: string) {
-    const result = await cloudinaryUtils.deleteFromCloudinary(publicId);
-    if (!result || result.result !== "ok") {
-      throw new Error("failed to delete receipt from cloudinary!");
-    }
+  async deleteReceipt(
+    publicId: string,
+    accountId: string,
+    transactionId: string,
+    userId: string,
+  ) {
+    validationUtils.requiredValue(publicId, "receipt public id");
+    validationUtils.requiredValue(accountId, "account id");
+    validationUtils.requiredValue(transactionId, "transaction id");
+    validationUtils.requiredValue(userId, "user id");
+
+    return await prisma.$transaction(async (tx) => {
+      // existing user, profile dan account dengan 1 query
+      const userData = await tx.user.findUnique({
+        where: {
+          id: userId,
+        },
+        select: {
+          id: true,
+          profile: { where: { userId }, select: { timezone: true } },
+          accounts: { where: { id: accountId }, select: { id: true } },
+        },
+      });
+      // validtaion user
+      if (!userData) throw new NotFoundError("user not found!");
+
+      // validation profile
+      const profileData = userData.profile;
+      if (!profileData)
+        throw new NotFoundError("this user don't have a profile!");
+
+      // validation account
+      const accountData = userData.accounts[0];
+      if (!accountData)
+        throw new NotFoundError("account on this user is not found!");
+
+      const receiptUpdated = await tx.transaction.update({
+        where: { id: transactionId },
+        data: { receiptPublicId: null, receiptUrl: null },
+      });
+      if (!receiptUpdated) {
+        throw new NotFoundError("transaction on this account is not found!");
+      }
+      const result = await cloudinaryUtils.deleteFromCloudinary(publicId);
+
+      if (!result || result.result !== "ok") {
+        throw new Error("failed to delete receipt from cloudinary!");
+      }
+      return receiptUpdated;
+    });
   },
 
   // create
@@ -232,7 +278,7 @@ const transactionService = {
           id: true,
           accounts: {
             where: { id: accountId },
-            select: { id: true, balance: true },
+            select: { id: true, balance: true, currency_code: true },
           },
         },
       });
@@ -246,8 +292,20 @@ const transactionService = {
 
       const balanceUpdate =
         dto.type === "expense"
-          ? accountData.balance.minus(dto.amount)
-          : accountData.balance.plus(dto.amount);
+          ? accountData.balance.minus(
+              convertCurrency(
+                dto.amount,
+                dto.currency_code,
+                accountData.currency_code,
+              ),
+            )
+          : accountData.balance.plus(
+              convertCurrency(
+                dto.amount,
+                dto.currency_code,
+                accountData.currency_code,
+              ),
+            );
       await tx.account.update({
         where: { id: accountData.id },
         data: { balance: balanceUpdate },
@@ -284,9 +342,10 @@ const transactionService = {
             select: {
               id: true,
               balance: true,
+              currency_code: true,
               transactions: {
                 where: { id },
-                select: { amount: true, type: true },
+                select: { amount: true, type: true, currency_code: true },
               },
             },
           },
@@ -306,34 +365,63 @@ const transactionService = {
         throw new NotFoundError("transaction on this account is not found!");
 
       let balanceUpdate = accountData.balance;
-      const { amount: newAmount, type: newType } = dto;
-      const { amount: oldAmount, type: oldType } = transactionData;
+      const {
+        amount: newAmount,
+        type: newType,
+        currency_code: newCurrency,
+      } = dto;
+      const {
+        amount: oldAmount,
+        type: oldType,
+        currency_code: oldCurrency,
+      } = transactionData;
 
       // Step 1: Reverse transaksi lama, kita anggap transaction lama itu gak ada.
       if (oldType === "expense") {
-        balanceUpdate = balanceUpdate.plus(oldAmount);
+        balanceUpdate = balanceUpdate.plus(
+          convertCurrency(
+            oldAmount.toNumber(),
+            oldCurrency,
+            accountData.currency_code,
+          ),
+        );
       } else {
-        balanceUpdate = balanceUpdate.minus(oldAmount);
+        balanceUpdate = balanceUpdate.minus(
+          convertCurrency(
+            oldAmount.toNumber(),
+            oldCurrency,
+            accountData.currency_code,
+          ),
+        );
       }
 
       // Step 2: jika ada nilai baru, pakai nilai baru, kalau gak ada, pakai nilai lama.
       const effectiveType = newType ?? oldType;
-      const effectiveAmount = newAmount ?? oldAmount;
-
+      const effectiveAmount = newAmount ?? oldAmount.toNumber();
+      const effectiveCurrency = newCurrency ?? oldCurrency;
       // step 3: baru di update, jika di pakek nilai lama keduanya, maka hasilnya sama seperti sebelumnya
       if (effectiveType === "expense") {
-        balanceUpdate = balanceUpdate.minus(effectiveAmount);
+        balanceUpdate = balanceUpdate.minus(
+          convertCurrency(effectiveAmount, oldCurrency, effectiveCurrency),
+        );
       } else {
-        balanceUpdate = balanceUpdate.plus(effectiveAmount);
+        balanceUpdate = balanceUpdate.plus(
+          convertCurrency(effectiveAmount, oldCurrency, effectiveCurrency),
+        );
       }
 
       const container: Prisma.transactionUpdateInput = {
-        ...(dto.amount && { amount: dto.amount }),
-        ...(dto.type && { type: dto.type }),
-        ...(dto.transactionAt && { transactionAt: dto.transactionAt }),
-        ...(dto.deletedAt && { deletedAt: dto.deletedAt }),
-        ...(dto.note && { note: dto.note }),
-        ...(dto.receiptUrl && { receiptUrl: dto.receiptUrl }),
+        ...(dto.amount !== undefined && { amount: dto.amount }),
+        ...(dto.type !== undefined && { type: dto.type }),
+        ...(dto.transactionAt !== undefined && {
+          transactionAt: dto.transactionAt,
+        }),
+        ...(dto.deletedAt !== undefined && { deletedAt: dto.deletedAt }),
+        ...(dto.note !== undefined && { note: dto.note }),
+        ...(dto.currency_code !== undefined && {
+          currency_code: dto.currency_code,
+        }),
+        ...(dto.receiptUrl !== undefined && { receiptUrl: dto.receiptUrl }),
       };
 
       await tx.account.update({
@@ -368,9 +456,10 @@ const transactionService = {
             select: {
               id: true,
               balance: true,
+              currency_code: true,
               transactions: {
                 where: { id },
-                select: { amount: true, type: true },
+                select: { amount: true, type: true, currency_code: true },
               },
             },
           },
@@ -394,11 +483,23 @@ const transactionService = {
       if (!transactionData)
         throw new NotFoundError("transaction on this account is not found!");
 
-      const { type, amount } = transactionData;
+      const { type, amount, currency_code } = transactionData;
       const balanceUpdate =
         type === "expense"
-          ? accountData.balance.plus(amount)
-          : accountData.balance.minus(amount);
+          ? accountData.balance.plus(
+              convertCurrency(
+                amount.toNumber(),
+                currency_code,
+                accountData.currency_code,
+              ),
+            )
+          : accountData.balance.minus(
+              convertCurrency(
+                amount.toNumber(),
+                currency_code,
+                accountData.currency_code,
+              ),
+            );
 
       await tx.account.update({
         where: { id: accountData.id },
@@ -434,9 +535,15 @@ const transactionService = {
             select: {
               id: true,
               balance: true,
+              currency_code: true,
               transactions: {
                 where: { id },
-                select: { id: true, amount: true, type: true },
+                select: {
+                  id: true,
+                  amount: true,
+                  type: true,
+                  currency_code: true,
+                },
               },
             },
           },
@@ -455,11 +562,23 @@ const transactionService = {
       if (!transactionData)
         throw new NotFoundError("transaction on this account is not found!");
 
-      const { type, amount } = transactionData;
+      const { type, amount, currency_code } = transactionData;
       const balanceUpdate =
         type === "expense"
-          ? accountData.balance.minus(amount)
-          : accountData.balance.plus(amount);
+          ? accountData.balance.minus(
+              convertCurrency(
+                amount.toNumber(),
+                currency_code,
+                accountData.currency_code,
+              ),
+            )
+          : accountData.balance.plus(
+              convertCurrency(
+                amount.toNumber(),
+                currency_code,
+                accountData.currency_code,
+              ),
+            );
 
       await tx.account.update({
         where: { id: accountData.id },

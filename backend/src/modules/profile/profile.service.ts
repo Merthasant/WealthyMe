@@ -89,12 +89,14 @@ const profileService = {
       if (!profileData) throw new NotFoundError("profile not found!");
 
       const container: Prisma.profileUpdateInput = {
-        ...(dto.avatarUrl && { avatarUrl: dto.avatarUrl }),
-        ...(dto.avatarPublicId && { avatarPublicId: dto.avatarPublicId }),
-        ...(dto.birthDate && { birthDate: dto.birthDate }),
-        ...(dto.displayName && { displayName: dto.displayName }),
-        ...(dto.profession && { profession: dto.profession }),
-        ...(dto.timezone && { timezone: dto.timezone }),
+        ...(dto.avatarUrl !== undefined && { avatarUrl: dto.avatarUrl }),
+        ...(dto.avatarPublicId !== undefined && {
+          avatarPublicId: dto.avatarPublicId,
+        }),
+        ...(dto.birthDate !== undefined && { birthDate: dto.birthDate }),
+        ...(dto.displayName !== undefined && { displayName: dto.displayName }),
+        ...(dto.profession !== undefined && { profession: dto.profession }),
+        ...(dto.timezone !== undefined && { timezone: dto.timezone }),
       };
 
       return await tx.profile.update({
