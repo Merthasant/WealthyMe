@@ -14,7 +14,11 @@ export const createAccountSchema = z.object({
   balance: z.coerce.number().default(0),
 });
 
-export const updateAccountSchema = createAccountSchema.partial();
+export const updateAccountSchema = createAccountSchema
+  .extend({
+    balance: z.coerce.number().optional(),
+  })
+  .partial();
 
 export type CreateAccountDTO = z.infer<typeof createAccountSchema>;
 export type UpdateAccountDTO = z.infer<typeof updateAccountSchema>;
