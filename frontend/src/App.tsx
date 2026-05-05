@@ -11,6 +11,7 @@ import ProfilePage from "./pages/dashboard/profile.page";
 import ProtectedRoute from "./routes/protected.route";
 import DashboardPage from "./pages/dashboard/dashboard.page";
 import AdminPage from "./pages/dashboard/admin.page";
+import NotFoundPage from "./pages/not-found.page";
 
 export default function App() {
   return (
@@ -37,6 +38,9 @@ export default function App() {
             <Route index element={<AdminPage />} />
           </Route>
         </Route>
+
+        {/* Catch-all route for 404 */}
+        <Route path="*" element={<NotFoundPage />} />
       </Routes>
     </Router>
   );
