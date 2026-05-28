@@ -13,6 +13,7 @@ app.use(
   cors({
     origin,
     credentials: true,
+    // exposedHeaders: ["x-new-access-token"],
   }),
 );
 app.use(express.json());

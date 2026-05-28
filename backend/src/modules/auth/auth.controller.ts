@@ -93,12 +93,16 @@ const authController = {
     console.log("userId", userId);
     if (!userId) return responseUtils.error(res, 400, "user id is required!");
     try {
-      const dataUser = await userService.findByIdExcPass(userId);
+      const dto = await userService.findByIdExcPass(userId);
+      const { role: userRole, ...dataUserWithoutRole } = dto;
+      const role = userRole?.name;
+      if (!role)
+        return responseUtils.error(res, 404, "this user does not have a role!");
       return responseUtils.success(
         res,
         200,
         "user authenticate successfully!",
-        { ...dataUser },
+        { role, ...dataUserWithoutRole },
       );
     } catch (err) {
       return catchAllErrors(res, err);

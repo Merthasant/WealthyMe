@@ -13,29 +13,41 @@ import { Input } from "@/components/ui/input";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Mail, RectangleEllipsis } from "lucide-react";
 import { Controller, useForm } from "react-hook-form";
-import { z } from "zod";
 
-import { Link } from "react-router-dom";
+import { Link, Navigate } from "react-router-dom";
 import ContinueWithAuth from "@/components/molecules/auth/continue-with.auth";
 import AuthFormContainer from "@/components/organisms/auth/form-container";
 import AuthContainer from "@/components/organisms/auth/container";
-
-const loginSchema = z.object({
-  email: z.email({ message: "invalid email format" }),
-  password: z
-    .string({ message: "password is required" })
-    .min(6, { message: "password must be at least 6 characters" }),
-});
-
-type LoginValues = z.infer<typeof loginSchema>;
+import { loginSchema, type LoginInput } from "@/lib/types/auth.type";
+import { useAuthContext } from "@/provider/auth/auth.provider.hook";
+import { authLogin } from "@/lib/APIs/services/auth.service";
+import { useMutation } from "@tanstack/react-query";
 
 export default function LoginPage() {
-  const form = useForm<LoginValues>({
-    resolver: zodResolver(loginSchema),
+  const { user, setUser, isLoading } = useAuthContext();
+
+  const mutate = useMutation({
+    mutationFn: (data: LoginInput) => authLogin(data),
+    onSuccess: (data) => {
+      const { token: _, ...user } = data.data;
+      setUser(user);
+      return <Navigate to={"/dashboard"} />;
+    },
   });
-  const onSubmit = (data: LoginValues) => {
-    console.table(data);
+  const form = useForm<LoginInput>({
+    resolver: zodResolver(loginSchema),
+    defaultValues: {
+      email: "",
+      password: "",
+    },
+  });
+  const onSubmit = async (data: LoginInput) => {
+    await mutate.mutateAsync(data);
   };
+
+  if (isLoading) return <h1>Loading</h1>;
+  if (user) return <Navigate to={"/dashboard"} />;
+
   return (
     <AuthContainer>
       <div className="bg-primary/20 p-12 rounded-2xl shadow-lg w-1/2 h-full hidden lg:flex items-center justify-center">
@@ -51,9 +63,7 @@ export default function LoginPage() {
                 <span className="text-primary">Welcome</span> <span>Back</span>
               </h1>
             </FieldLegend>
-            <FieldDescription>
-              <h1>Sign in to your account below</h1>
-            </FieldDescription>
+            <FieldDescription>Sign in to your account below</FieldDescription>
 
             <FieldGroup>
               {/* field untuk email */}

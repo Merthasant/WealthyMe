@@ -12,10 +12,12 @@ import ProtectedRoute from "./routes/protected.route";
 import DashboardPage from "./pages/dashboard/dashboard.page";
 import AdminPage from "./pages/dashboard/admin.page";
 import NotFoundPage from "./pages/not-found.page";
+import NavigateSetter from "./setter/navigate.setter";
 
 export default function App() {
   return (
     <Router>
+      <NavigateSetter />
       <Routes>
         {/* Public Routes */}
         <Route element={<AuthLayout />}>

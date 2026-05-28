@@ -13,35 +13,48 @@ import {
   FieldSet,
 } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
+import { authRegister } from "@/lib/APIs/services/auth.service";
+import {
+  createUserInputSchema,
+  type CreateUserInput,
+} from "@/lib/types/user.type";
+import { useAuthContext } from "@/provider/auth/auth.provider.hook";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { useMutation } from "@tanstack/react-query";
 import { Mail, RectangleEllipsis, TicketCheck, User } from "lucide-react";
 import { Controller, useForm } from "react-hook-form";
-import { Link } from "react-router-dom";
-import { z } from "zod";
-
-const registerSchema = z.object({
-  name: z
-    .string({ message: "name is required!" })
-    .min(2, { message: "user name must be at least 2 characters" }),
-  email: z.email({ message: "invalid email format" }),
-  password: z
-    .string({ message: "password is required!" })
-    .min(6, { message: "password must be at least 6 characters" }),
-  confPassword: z
-    .string({ message: "confirm password is required!" })
-    .min(6, { message: "confirm password must be at least 6 characters" }),
-});
-
-type RegisterValues = z.infer<typeof registerSchema>;
+import { Link, Navigate } from "react-router-dom";
 
 export default function RegisterPage() {
-  const form = useForm<RegisterValues>({
-    resolver: zodResolver(registerSchema),
+  const { user, setUser, isLoading } = useAuthContext();
+
+  const mutate = useMutation({
+    mutationFn: (data: CreateUserInput) => authRegister(data),
+    onSuccess: (data) => {
+      const { token: _, ...user } = data.data;
+      setUser(user);
+      if (!isLoading) return <Navigate to={"/dashboard"} />;
+    },
   });
 
-  const onSubmit = (data: RegisterValues) => {
-    console.log(data);
+  const form = useForm<CreateUserInput>({
+    resolver: zodResolver(createUserInputSchema),
+    defaultValues: {
+      name: "",
+      email: "",
+      password: "",
+      confPassword: "",
+      role: "user",
+    },
+  });
+
+  const onSubmit = async (data: CreateUserInput) => {
+    await mutate.mutateAsync(data);
   };
+
+  if (isLoading) return <h1>Loading</h1>;
+  if (user) return <Navigate to={"/dashboard"} />;
+
   return (
     <AuthContainer>
       <AuthFormContainer>
@@ -67,12 +80,13 @@ export default function RegisterPage() {
                 name="name"
                 control={form.control}
                 render={({ field, fieldState }) => (
-                  <Field>
+                  <Field aria-invalid={fieldState.invalid}>
                     <FieldLabel htmlFor="name">Name</FieldLabel>
                     <Input
                       {...field}
                       id="name"
                       placeholder="name here..."
+                      aria-invalid={fieldState.invalid}
                       icon={<User />}
                     />
                     {fieldState.invalid && (
@@ -87,12 +101,14 @@ export default function RegisterPage() {
                 name="email"
                 control={form.control}
                 render={({ field, fieldState }) => (
-                  <Field>
+                  <Field aria-invalid={fieldState.invalid}>
                     <FieldLabel htmlFor="email">Email</FieldLabel>
                     <Input
                       {...field}
                       id="email"
                       placeholder="email here..."
+                      aria-invalid={fieldState.invalid}
+                      type="email"
                       icon={<Mail />}
                     />
                     {fieldState.invalid && (
@@ -107,12 +123,14 @@ export default function RegisterPage() {
                 name="password"
                 control={form.control}
                 render={({ field, fieldState }) => (
-                  <Field>
+                  <Field aria-invalid={fieldState.invalid}>
                     <FieldLabel htmlFor="password">Password</FieldLabel>
                     <Input
                       {...field}
                       id="password"
                       placeholder="password here..."
+                      aria-invalid={fieldState.invalid}
+                      type="password"
                       icon={<RectangleEllipsis />}
                     />
                     {fieldState.invalid && (
@@ -127,13 +145,15 @@ export default function RegisterPage() {
                 name="confPassword"
                 control={form.control}
                 render={({ field, fieldState }) => (
-                  <Field>
+                  <Field aria-invalid={fieldState.invalid}>
                     <FieldLabel htmlFor="confPassword">
                       Confirm Password
                     </FieldLabel>
                     <Input
                       {...field}
                       id="confPassword"
+                      type="password"
+                      aria-invalid={fieldState.invalid}
                       placeholder="confirm password..."
                       icon={<TicketCheck />}
                     />

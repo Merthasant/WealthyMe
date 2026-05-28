@@ -98,7 +98,7 @@ const authService = {
         email,
         role,
       );
-      const { password: _, createdAt: __, role: ___, ...data } = existingUser;
+      const { password: _, role: __, ...data } = existingUser;
       const container: AuthOutput = {
         ...data,
         role,
@@ -142,7 +142,7 @@ const authService = {
         createRole.name,
       );
 
-      const { password: _, createdAt: __, ...data } = createUser;
+      const { password: _, ...data } = createUser;
       const container: AuthOutput = {
         ...data,
         role: createRole.name,
