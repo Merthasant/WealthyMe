@@ -1,12 +1,10 @@
-import { Outlet } from "react-router-dom";
+import { useAuthStore } from "@/store/auth.store";
+import { Navigate, Outlet } from "react-router-dom";
 
-interface ProtectedRouteProps {
-  adminOnly?: boolean;
-}
+export default function ProtectedRoute() {
+  const accessToken = useAuthStore((state) => state.accessToken);
 
-export default function ProtectedRoute({ adminOnly }: ProtectedRouteProps) {
-  if (adminOnly) {
-    alert("Admin access only!");
-  }
+  if (!accessToken) return <Navigate to={"/sign-in"} replace />;
+
   return <Outlet />;
 }

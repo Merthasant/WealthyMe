@@ -19,19 +19,19 @@ import ContinueWithAuth from "@/components/molecules/auth/continue-with.auth";
 import AuthFormContainer from "@/components/organisms/auth/form-container";
 import AuthContainer from "@/components/organisms/auth/container";
 import { loginSchema, type LoginInput } from "@/lib/types/auth.type";
-import { useAuthContext } from "@/provider/auth/auth.provider.hook";
-import { authLogin } from "@/lib/APIs/services/auth.service";
-import { useMutation } from "@tanstack/react-query";
+import { useAuthStore } from "@/store/auth.store";
+import { useAuthLogin } from "@/lib/queries/auth.query";
 
 export default function LoginPage() {
-  const { user, setUser, isLoading } = useAuthContext();
-
-  const mutate = useMutation({
-    mutationFn: (data: LoginInput) => authLogin(data),
-    onSuccess: (data) => {
-      const { token: _, ...user } = data.data;
-      setUser(user);
-      return <Navigate to={"/dashboard"} />;
+  const setAccessToken = useAuthStore((state) => state.setAccessToken);
+  const mutate = useAuthLogin({
+    mutationConfig: {
+      onSuccess: (data) => {
+        const accessToken = data.data?.token.accessToken;
+        if (!accessToken) throw new Error("Access token is missing");
+        setAccessToken(accessToken);
+        return <Navigate to={"/dashboard"} />;
+      },
     },
   });
   const form = useForm<LoginInput>({
@@ -44,9 +44,6 @@ export default function LoginPage() {
   const onSubmit = async (data: LoginInput) => {
     await mutate.mutateAsync(data);
   };
-
-  if (isLoading) return <h1>Loading</h1>;
-  if (user) return <Navigate to={"/dashboard"} />;
 
   return (
     <AuthContainer>
@@ -112,7 +109,11 @@ export default function LoginPage() {
 
               {/* field button submit */}
               <Field>
-                <Button type="submit">Sign in to your account</Button>
+                <Button disabled={form.formState.isSubmitting} type="submit">
+                  {form.formState.isSubmitting
+                    ? "Signing in..."
+                    : "Sign in to your account"}
+                </Button>
               </Field>
 
               <FieldSeparator>

@@ -10,8 +10,6 @@ export const authLogin = async (
     "/auth/login",
     dto,
   );
-  const accessToken = res.data.data.token.accessToken;
-  localStorage.setItem("accessToken", accessToken);
   return res.data;
 };
 
@@ -22,14 +20,19 @@ export const authRegister = async (
     "/auth/register",
     dto,
   );
-  const accessToken = res.data.data.token.accessToken;
-  localStorage.setItem("accessToken", accessToken);
   return res.data;
 };
 
 export const authLogout = async (): Promise<ApiResponse<null>> => {
   const res = await instance.post<ApiResponse<null>>("/auth/logout");
-  localStorage.removeItem("accessToken");
+  return res.data;
+};
+
+export const authRefresh = async (): Promise<
+  ApiResponse<{ accessToken: string }>
+> => {
+  const res =
+    await instance.get<ApiResponse<{ accessToken: string }>>("/auth/refresh");
   return res.data;
 };
 

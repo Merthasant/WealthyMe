@@ -16,6 +16,7 @@ router.post(
   validationMiddleware.validateBody(registerSchema),
   authController.register,
 );
+router.get("/refresh", authController.refreshToken);
 router.post("/logout", accessMiddleware.verifyUser, authController.logout);
 router.get("/me", accessMiddleware.verifyUser, authController.me);
 

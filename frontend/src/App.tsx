@@ -16,7 +16,11 @@ import NavigateSetter from "./setter/navigate.setter";
 import CreateProfilePage from "./pages/onBroading/create-profile.page";
 import OnBroadingMainPage from "./pages/onBroading/main";
 import OnBoardingLayout from "./layouts/onBoarding.layout";
-import ProfileProvider from "./provider/profile/profile.provider";
+import PublicRoute from "./routes/public.route";
+import DontHaveProfileRoute from "./routes/dont-have-profile.route";
+import HaveProfileRoute from "./routes/have-profile.route";
+import AdminRoute from "./routes/admin.route";
+import AccessDinied from "./pages/access-denied.page";
 
 export default function App() {
   return (
@@ -24,34 +28,48 @@ export default function App() {
       <NavigateSetter />
       <Routes>
         {/* Public Routes */}
-        <Route element={<AuthLayout />}>
-          <Route path="sign-in" element={<LoginPage />} />
-          <Route path="sign-up" element={<RegisterPage />} />
+        <Route element={<PublicRoute />}>
+          <Route element={<AuthLayout />}>
+            <Route path="sign-in" element={<LoginPage />} />
+            <Route path="sign-up" element={<RegisterPage />} />
+          </Route>
         </Route>
 
-        {/*profile provider*/}
-        <Route element={<ProfileProvider />}>
-          {/* Onboarding Route */}
-          <Route path="onBoarding" element={<OnBoardingLayout />}>
-            <Route index element={<OnBroadingMainPage />} />
-            <Route path="create-profile" element={<CreateProfilePage />} />
+        {/* Protected Routes*/}
+        <Route element={<ProtectedRoute />}>
+          {/* Don't have Profile Routes */}
+          <Route element={<DontHaveProfileRoute />}>
+            {/* Onboarding Route */}
+            <Route path="onBoarding" element={<OnBoardingLayout />}>
+              <Route index element={<OnBroadingMainPage />} />
+              <Route path="create-profile" element={<CreateProfilePage />} />
+            </Route>
           </Route>
-          {/* Protected Routes*/}
-          <Route path="dashboard" element={<DashboardLayout />}>
-            {/* User Routes */}
-            <Route index element={<DashboardPage />} />
-            <Route path="transactions" element={<TransactionListPage />} />
-            <Route path="transaction/:id" element={<TransactionDetailPage />} />
-            <Route path="accounts" element={<AccountPage />} />
-            <Route path="categories" element={<CategoriesPage />} />
-            <Route path="profile" element={<ProfilePage />} />
 
-            {/* Admin Routes */}
-            <Route path="admin" element={<ProtectedRoute adminOnly />}>
-              <Route index element={<AdminPage />} />
+          {/* Have Profile Routes */}
+          <Route element={<HaveProfileRoute />}>
+            <Route path="dashboard" element={<DashboardLayout />}>
+              {/* User Routes */}
+              <Route index element={<DashboardPage />} />
+              <Route path="transactions" element={<TransactionListPage />} />
+              <Route
+                path="transaction/:id"
+                element={<TransactionDetailPage />}
+              />
+              <Route path="accounts" element={<AccountPage />} />
+              <Route path="categories" element={<CategoriesPage />} />
+              <Route path="profile" element={<ProfilePage />} />
+
+              {/* Admin Routes */}
+              <Route element={<AdminRoute />}>
+                <Route path="admin" element={<AdminPage />} />
+              </Route>
             </Route>
           </Route>
         </Route>
+
+        {/* access dinied */}
+        <Route path="access-dinied" element={<AccessDinied />} />
 
         {/* Catch-all route for 404 */}
         <Route path="*" element={<NotFoundPage />} />

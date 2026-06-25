@@ -1,40 +1,65 @@
 import {
+  authMe,
   authLogin,
   authRegister,
   authLogout,
-  authMe,
 } from "@/lib/APIs/services/auth.service";
-import { useQuery } from "@tanstack/react-query";
-import type { CreateUserInput } from "../types/user.type";
+import { useAuthStore } from "@/store/auth.store";
+import { queryOptions, useMutation, useQuery } from "@tanstack/react-query";
 import type { LoginInput } from "../types/auth.type";
+import type { MutationConfig } from "../types/query.type";
+import type { CreateUserInput } from "../types/user.type";
 
-export const useAuthLogin = (dto: LoginInput) => {
-  return useQuery({
-    queryKey: ["auth", "login"],
-    queryFn: () => authLogin(dto),
-  });
-};
+// auth me query
+const accessToken = useAuthStore.getState().accessToken;
 
-export const useAuthRegister = (dto: CreateUserInput) => {
-  return useQuery({
-    queryKey: ["auth", "register"],
-    queryFn: () => authRegister(dto),
-  });
-};
+const getAuthQueryKey = (key: string) => ["auth", key];
 
-export const useAuthLogout = () => {
-  return useQuery({
-    queryKey: ["auth", "logout"],
-    queryFn: authLogout,
+const getAuthMeQueryOptions = () => {
+  return queryOptions({
+    queryKey: getAuthQueryKey("me"),
+    queryFn: authMe,
   });
 };
 
 export const useAuthMe = () => {
   return useQuery({
-    queryKey: ["auth", "me"],
-    queryFn: authMe,
-    enabled: !!localStorage.getItem("accessToken"),
+    ...getAuthMeQueryOptions(),
+    enabled: !!accessToken,
     retry: false,
     staleTime: Infinity,
+  });
+};
+// auth login mutation
+type AuthLoginParams = { mutationConfig?: MutationConfig<typeof authLogin> };
+
+export const useAuthLogin = (params: AuthLoginParams = {}) => {
+  return useMutation({
+    mutationFn: (data: LoginInput) => authLogin(data),
+    ...params.mutationConfig,
+  });
+};
+
+// auth register mutation
+type AuthRegisterParams = {
+  mutationConfig?: MutationConfig<typeof authRegister>;
+};
+
+export const useAuthRegister = (params: AuthRegisterParams = {}) => {
+  return useMutation({
+    mutationFn: (data: CreateUserInput) => authRegister(data),
+    ...params.mutationConfig,
+  });
+};
+
+// auth logout mutation
+type AuthLogoutParams = {
+  mutationConfig?: MutationConfig<typeof authLogout>;
+};
+
+export const useAuthLogout = (params: AuthLogoutParams = {}) => {
+  return useMutation({
+    mutationFn: () => authLogout(),
+    ...params.mutationConfig,
   });
 };

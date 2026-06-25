@@ -6,6 +6,7 @@ import { Request, Response } from "express";
 import authService from "./auth.service";
 import userService from "../user/user.service";
 import { LoginDTO, RegisterDTO } from "@/lib/types/auth.type";
+import jwt from "jsonwebtoken";
 
 declare global {
   namespace Express {
@@ -103,6 +104,71 @@ const authController = {
         200,
         "user authenticate successfully!",
         { role, ...dataUserWithoutRole },
+      );
+    } catch (err) {
+      return catchAllErrors(res, err);
+    }
+  },
+
+  async refreshToken(req: Request, res: Response) {
+    const { refreshToken } = req.cookies;
+    if (!refreshToken)
+      return responseUtils.error(res, 400, "refresh token is required!");
+    const device = req.headers["user-agent"] ?? "unknown";
+    // get refresh token in store
+    const storedToken = await authService.getRefreshTokenByToken(
+      refreshToken,
+      device,
+    );
+    if (!storedToken) {
+      res.clearCookie("refreshToken");
+      return responseUtils.error(
+        res,
+        404,
+        "refresh token not found! or different device",
+      );
+    }
+    const now = Math.floor(Date.now() / 1000); // date in unix
+
+    if (storedToken.expiredAt < now) {
+      authService.revokedRefreshToken(refreshToken);
+      res.clearCookie("refreshToken");
+      return responseUtils.error(
+        res,
+        401,
+        "unauthorized!, refresh token is expired!",
+      );
+    }
+    // verify refresh token is revoked
+    try {
+      authService.verifyRefreshToken(refreshToken);
+    } catch (err) {
+      if (err instanceof jwt.TokenExpiredError) {
+        authService.revokedRefreshToken(refreshToken);
+        res.clearCookie("refreshToken");
+        return responseUtils.error(res, 401, "refresh token expired!");
+      }
+      return catchAllErrors(res, err);
+    }
+
+    try {
+      const findUser = await userService.findByIdExcPass(storedToken.userId);
+      if (!findUser) {
+        res.clearCookie("refreshToken");
+        return responseUtils.error(res, 404, "user not found!");
+      }
+      const role = findUser.role?.name;
+      if (!role) {
+        res.clearCookie("refreshToken");
+        return responseUtils.error(res, 404, "user role not found!");
+      }
+
+      const newAccessToken = authService.createAccessToken(findUser.id, role);
+      return responseUtils.success(
+        res,
+        200,
+        "access token generated successfully!",
+        { accessToken: newAccessToken },
       );
     } catch (err) {
       return catchAllErrors(res, err);

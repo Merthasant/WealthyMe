@@ -13,27 +13,28 @@ import {
   FieldSet,
 } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
-import { authRegister } from "@/lib/APIs/services/auth.service";
+import { useAuthRegister } from "@/lib/queries/auth.query";
 import {
   createUserInputSchema,
   type CreateUserInput,
 } from "@/lib/types/user.type";
-import { useAuthContext } from "@/provider/auth/auth.provider.hook";
+import { useAuthStore } from "@/store/auth.store";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useMutation } from "@tanstack/react-query";
 import { Mail, RectangleEllipsis, TicketCheck, User } from "lucide-react";
 import { Controller, useForm } from "react-hook-form";
 import { Link, Navigate } from "react-router-dom";
 
 export default function RegisterPage() {
-  const { user, setUser, isLoading } = useAuthContext();
+  const setAccessToken = useAuthStore((state) => state.setAccessToken);
 
-  const mutate = useMutation({
-    mutationFn: (data: CreateUserInput) => authRegister(data),
-    onSuccess: (data) => {
-      const { token: _, ...user } = data.data;
-      setUser(user);
-      if (!isLoading) return <Navigate to={"/dashboard"} />;
+  const mutate = useAuthRegister({
+    mutationConfig: {
+      onSuccess: (data) => {
+        const accessToken = data.data?.token.accessToken;
+        if (!accessToken) throw new Error("Access token is missing");
+        setAccessToken(accessToken);
+        return <Navigate to={"/dashboard"} />;
+      },
     },
   });
 
@@ -51,9 +52,6 @@ export default function RegisterPage() {
   const onSubmit = async (data: CreateUserInput) => {
     await mutate.mutateAsync(data);
   };
-
-  if (isLoading) return <h1>Loading</h1>;
-  if (user) return <Navigate to={"/dashboard"} />;
 
   return (
     <AuthContainer>
@@ -167,8 +165,14 @@ export default function RegisterPage() {
               {/* submit */}
 
               <Field>
-                <Button className="font-bold" type="submit">
-                  Add new account
+                <Button
+                  disabled={form.formState.isSubmitting}
+                  className="font-bold"
+                  type="submit"
+                >
+                  {form.formState.isSubmitting
+                    ? "Creating Account..."
+                    : "Add new account"}
                 </Button>
               </Field>
 
