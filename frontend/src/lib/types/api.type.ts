@@ -9,9 +9,9 @@ export interface ApiResponse<T = unknown> {
   status: number;
   success: boolean;
   message: string;
-  data: T;
+  data: T | null;
   errors: unknown | null;
-  meta: Meta;
+  meta: Meta | null;
 }
 
 export interface ApiError {
