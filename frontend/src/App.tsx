@@ -13,6 +13,10 @@ import DashboardPage from "./pages/dashboard/dashboard.page";
 import AdminPage from "./pages/dashboard/admin.page";
 import NotFoundPage from "./pages/not-found.page";
 import NavigateSetter from "./setter/navigate.setter";
+import CreateProfilePage from "./pages/onBroading/create-profile.page";
+import OnBroadingMainPage from "./pages/onBroading/main";
+import OnBoardingLayout from "./layouts/onBoarding.layout";
+import ProfileProvider from "./provider/profile/profile.provider";
 
 export default function App() {
   return (
@@ -25,19 +29,27 @@ export default function App() {
           <Route path="sign-up" element={<RegisterPage />} />
         </Route>
 
-        {/* Protected Routes*/}
-        <Route path="dashboard" element={<DashboardLayout />}>
-          {/* User Routes */}
-          <Route index element={<DashboardPage />} />
-          <Route path="transactions" element={<TransactionListPage />} />
-          <Route path="transaction/:id" element={<TransactionDetailPage />} />
-          <Route path="accounts" element={<AccountPage />} />
-          <Route path="categories" element={<CategoriesPage />} />
-          <Route path="profile" element={<ProfilePage />} />
+        {/*profile provider*/}
+        <Route element={<ProfileProvider />}>
+          {/* Onboarding Route */}
+          <Route path="onBoarding" element={<OnBoardingLayout />}>
+            <Route index element={<OnBroadingMainPage />} />
+            <Route path="create-profile" element={<CreateProfilePage />} />
+          </Route>
+          {/* Protected Routes*/}
+          <Route path="dashboard" element={<DashboardLayout />}>
+            {/* User Routes */}
+            <Route index element={<DashboardPage />} />
+            <Route path="transactions" element={<TransactionListPage />} />
+            <Route path="transaction/:id" element={<TransactionDetailPage />} />
+            <Route path="accounts" element={<AccountPage />} />
+            <Route path="categories" element={<CategoriesPage />} />
+            <Route path="profile" element={<ProfilePage />} />
 
-          {/* Admin Routes */}
-          <Route path="admin" element={<ProtectedRoute adminOnly />}>
-            <Route index element={<AdminPage />} />
+            {/* Admin Routes */}
+            <Route path="admin" element={<ProtectedRoute adminOnly />}>
+              <Route index element={<AdminPage />} />
+            </Route>
           </Route>
         </Route>
 
