@@ -1,4 +1,4 @@
-import type { ChildrenProps } from "./auth.organism.type";
+import type { ChildrenProps } from "@/lib/types/components.type";
 
 export default function AuthFormContainer({ children }: ChildrenProps) {
   return (
