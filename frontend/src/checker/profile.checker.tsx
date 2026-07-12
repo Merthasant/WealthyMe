@@ -1,5 +1,5 @@
-import type { ChildrenProps } from "@/components/organisms/auth/auth.organism.type";
 import { getProfile } from "@/lib/APIs/services/profile.service";
+import type { ChildrenProps } from "@/lib/types/components.type";
 import { useAuthStore } from "@/store/auth.store";
 import { useProfileStore } from "@/store/profile.store";
 import { useEffect, useState } from "react";

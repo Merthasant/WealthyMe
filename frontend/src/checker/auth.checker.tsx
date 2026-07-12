@@ -1,5 +1,5 @@
-import type { ChildrenProps } from "@/components/organisms/auth/auth.organism.type";
 import { authRefresh } from "@/lib/APIs/services/auth.service";
+import type { ChildrenProps } from "@/lib/types/components.type";
 import { useAuthStore } from "@/store/auth.store";
 import { useEffect, useState } from "react";
 
