@@ -1,10 +1,10 @@
 import { getProfile } from "@/lib/APIs/services/profile.service";
-import type { ChildrenProps } from "@/lib/types/components.type";
 import { useAuthStore } from "@/store/auth.store";
 import { useProfileStore } from "@/store/profile.store";
 import { useEffect, useState } from "react";
+import { Outlet } from "react-router-dom";
 
-export default function ProfileChecker({ children }: ChildrenProps) {
+export default function ProfileChecker() {
   const [isChecking, setIsChecking] = useState<boolean>(true);
   const accessToken = useAuthStore((s) => s.accessToken);
   const setHaveProfile = useProfileStore((s) => s.setHaveProfile);
@@ -26,5 +26,5 @@ export default function ProfileChecker({ children }: ChildrenProps) {
 
   if (isChecking) return <h1>Loading...</h1>;
 
-  return <>{children}</>;
+  return <Outlet />;
 }

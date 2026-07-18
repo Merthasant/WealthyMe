@@ -21,6 +21,7 @@ import DontHaveProfileRoute from "./routes/dont-have-profile.route";
 import HaveProfileRoute from "./routes/have-profile.route";
 import AdminRoute from "./routes/admin.route";
 import AccessDinied from "./pages/access-denied.page";
+import ProfileChecker from "./checker/profile.checker";
 
 export default function App() {
   return (
@@ -37,32 +38,34 @@ export default function App() {
 
         {/* Protected Routes*/}
         <Route element={<ProtectedRoute />}>
-          {/* Don't have Profile Routes */}
-          <Route element={<DontHaveProfileRoute />}>
-            {/* Onboarding Route */}
-            <Route path="onBoarding" element={<OnBoardingLayout />}>
-              <Route index element={<OnBroadingMainPage />} />
-              <Route path="create-profile" element={<CreateProfilePage />} />
+          <Route element={<ProfileChecker />}>
+            {/* Don't have Profile Routes */}
+            <Route element={<DontHaveProfileRoute />}>
+              {/* Onboarding Route */}
+              <Route path="onBoarding" element={<OnBoardingLayout />}>
+                <Route index element={<OnBroadingMainPage />} />
+                <Route path="create-profile" element={<CreateProfilePage />} />
+              </Route>
             </Route>
-          </Route>
 
-          {/* Have Profile Routes */}
-          <Route element={<HaveProfileRoute />}>
-            <Route path="dashboard" element={<DashboardLayout />}>
-              {/* User Routes */}
-              <Route index element={<DashboardPage />} />
-              <Route path="transactions" element={<TransactionListPage />} />
-              <Route
-                path="transaction/:id"
-                element={<TransactionDetailPage />}
-              />
-              <Route path="accounts" element={<AccountPage />} />
-              <Route path="categories" element={<CategoriesPage />} />
-              <Route path="profile" element={<ProfilePage />} />
+            {/* Have Profile Routes */}
+            <Route element={<HaveProfileRoute />}>
+              <Route path="dashboard" element={<DashboardLayout />}>
+                {/* User Routes */}
+                <Route index element={<DashboardPage />} />
+                <Route path="transactions" element={<TransactionListPage />} />
+                <Route
+                  path="transaction/:id"
+                  element={<TransactionDetailPage />}
+                />
+                <Route path="accounts" element={<AccountPage />} />
+                <Route path="categories" element={<CategoriesPage />} />
+                <Route path="profile" element={<ProfilePage />} />
 
-              {/* Admin Routes */}
-              <Route element={<AdminRoute />}>
-                <Route path="admin" element={<AdminPage />} />
+                {/* Admin Routes */}
+                <Route element={<AdminRoute />}>
+                  <Route path="admin" element={<AdminPage />} />
+                </Route>
               </Route>
             </Route>
           </Route>
