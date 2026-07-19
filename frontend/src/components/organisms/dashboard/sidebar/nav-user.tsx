@@ -23,17 +23,42 @@ import {
   NotificationIcon,
   LogoutIcon,
 } from "@hugeicons/core-free-icons";
+import { useGetProfile } from "@/lib/queries/profile.query";
+import { getUiAvatarUrlRandomColor } from "@/lib/utils/avatar-generate.utils";
+import { useAuthMe } from "@/lib/queries/auth.query";
 
-export function NavUser({
-  user,
-}: {
-  user: {
-    name: string;
-    email: string;
-    avatar: string;
-  };
-}) {
+const getAvatarImageUrl = (
+  avatarUrl: string | undefined | null,
+  displayname: string | undefined | null,
+  username: string,
+): string => {
+  if (avatarUrl) return avatarUrl;
+  if (displayname) return getUiAvatarUrlRandomColor({ name: displayname });
+  return getUiAvatarUrlRandomColor({ name: username });
+};
+
+export function NavUser() {
   const { isMobile } = useSidebar();
+
+  const {
+    data: profileData,
+    isLoading: profileLoading,
+    isError: profileError,
+  } = useGetProfile();
+  const {
+    data: userData,
+    isLoading: userLoading,
+    isError: userError,
+  } = useAuthMe();
+  const avatarImageUrl = getAvatarImageUrl(
+    profileData?.data?.avatarUrl,
+    profileData?.data?.displayName,
+    userData?.data?.name ?? "unknown",
+  );
+
+  if (profileLoading || userLoading) return <h1>woop.</h1>;
+  if (profileError) alert("profile error");
+  if (userError) alert("user Error");
 
   return (
     <SidebarMenu>
@@ -45,12 +70,19 @@ export function NavUser({
               className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
             >
               <Avatar className="h-8 w-8 rounded-lg">
-                <AvatarImage src={user.avatar} alt={user.name} />
+                <AvatarImage
+                  src={avatarImageUrl}
+                  alt={userData?.data?.name ?? "unknown"}
+                />
                 <AvatarFallback className="rounded-lg">CN</AvatarFallback>
               </Avatar>
               <div className="grid flex-1 text-left text-sm leading-tight">
-                <span className="truncate font-medium">{user.name}</span>
-                <span className="truncate text-xs">{user.email}</span>
+                <span className="truncate font-medium">
+                  {profileData?.data?.displayName ?? userData?.data?.name}
+                </span>
+                <span className="truncate text-xs">
+                  {userData?.data?.email ?? "unknown"}
+                </span>
               </div>
               <HugeiconsIcon
                 icon={UnfoldMoreIcon}
@@ -68,12 +100,19 @@ export function NavUser({
             <DropdownMenuLabel className="p-0 font-normal">
               <div className="flex items-center gap-2 px-1 py-1.5 text-left text-sm">
                 <Avatar className="h-8 w-8 rounded-lg">
-                  <AvatarImage src={user.avatar} alt={user.name} />
+                  <AvatarImage
+                    src={avatarImageUrl}
+                    alt={userData?.data?.name ?? "unknown"}
+                  />
                   <AvatarFallback className="rounded-lg">CN</AvatarFallback>
                 </Avatar>
                 <div className="grid flex-1 text-left text-sm leading-tight">
-                  <span className="truncate font-medium">{user.name}</span>
-                  <span className="truncate text-xs">{user.email}</span>
+                  <span className="truncate font-medium">
+                    {profileData?.data?.displayName ?? userData?.data?.name}
+                  </span>
+                  <span className="truncate text-xs">
+                    {userData?.data?.email ?? "unknown"}
+                  </span>
                 </div>
               </div>
             </DropdownMenuLabel>

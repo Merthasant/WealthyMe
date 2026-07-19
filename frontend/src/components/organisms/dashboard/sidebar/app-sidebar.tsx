@@ -3,7 +3,6 @@
 import * as React from "react";
 
 import { NavMain } from "@/components/organisms/dashboard/sidebar/nav-main";
-import { NavProjects } from "@/components/organisms/dashboard/sidebar/nav-projects";
 import { NavUser } from "@/components/organisms/dashboard/sidebar/nav-user";
 import { TeamSwitcher } from "@/components/organisms/dashboard/sidebar/team-switcher";
 import {
@@ -18,17 +17,19 @@ import {
   LayoutBottomIcon,
   AudioWave01Icon,
   CommandIcon,
-  ComputerTerminalIcon,
-  RoboticIcon,
-  BookOpen02Icon,
-  Settings05Icon,
   CropIcon,
   PieChartIcon,
   MapsIcon,
+  DashboardSquare02Icon,
+  Wallet01Icon,
+  TagsIcon,
+  AccountSetting01Icon,
+  TransactionHistoryIcon,
 } from "@hugeicons/core-free-icons";
+import type { NavMainType } from "@/lib/types/dashboard.type";
 
 // This is sample data.
-const data = {
+const dataaa = {
   user: {
     name: "shadcn",
     email: "m@example.com",
@@ -51,93 +52,6 @@ const data = {
       plan: "Free",
     },
   ],
-  navMain: [
-    {
-      title: "Playground",
-      url: "#",
-      icon: <HugeiconsIcon icon={ComputerTerminalIcon} strokeWidth={2} />,
-      isActive: true,
-      items: [
-        {
-          title: "History",
-          url: "#",
-        },
-        {
-          title: "Starred",
-          url: "#",
-        },
-        {
-          title: "Settings",
-          url: "#",
-        },
-      ],
-    },
-    {
-      title: "Models",
-      url: "#",
-      icon: <HugeiconsIcon icon={RoboticIcon} strokeWidth={2} />,
-      items: [
-        {
-          title: "Genesis",
-          url: "#",
-        },
-        {
-          title: "Explorer",
-          url: "#",
-        },
-        {
-          title: "Quantum",
-          url: "#",
-        },
-      ],
-    },
-    {
-      title: "Documentation",
-      url: "#",
-      icon: <HugeiconsIcon icon={BookOpen02Icon} strokeWidth={2} />,
-      items: [
-        {
-          title: "Introduction",
-          url: "#",
-        },
-        {
-          title: "Get Started",
-          url: "#",
-        },
-        {
-          title: "Tutorials",
-          url: "#",
-        },
-        {
-          title: "Changelog",
-          url: "#",
-        },
-      ],
-    },
-    {
-      title: "Settings",
-      url: "#",
-      icon: <HugeiconsIcon icon={Settings05Icon} strokeWidth={2} />,
-      items: [
-        {
-          title: "General",
-          url: "#",
-        },
-        {
-          title: "Team",
-          url: "#",
-        },
-        {
-          title: "Billing",
-          url: "#",
-        },
-        {
-          title: "Limits",
-          url: "#",
-        },
-      ],
-    },
-  ],
   projects: [
     {
       name: "Design Engineering",
@@ -157,18 +71,46 @@ const data = {
   ],
 };
 
+const navMain: NavMainType = [
+  {
+    title: "Dashboard",
+    url: "/dashboard",
+    icon: <HugeiconsIcon icon={DashboardSquare02Icon} strokeWidth={2} />,
+    isActive: true,
+  },
+  {
+    title: "Transactions",
+    url: "transactions",
+    icon: <HugeiconsIcon icon={TransactionHistoryIcon} strokeWidth={2} />,
+    isActive: false,
+  },
+  {
+    title: "Accounts",
+    url: "accounts",
+    icon: <HugeiconsIcon icon={Wallet01Icon} strokeWidth={2} />,
+  },
+  {
+    title: "Categories",
+    url: "categories",
+    icon: <HugeiconsIcon icon={TagsIcon} strokeWidth={2} />,
+  },
+  {
+    title: "Profile",
+    url: "profile",
+    icon: <HugeiconsIcon icon={AccountSetting01Icon} strokeWidth={2} />,
+  },
+];
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   return (
     <Sidebar collapsible="icon" {...props}>
       <SidebarHeader>
-        <TeamSwitcher teams={data.teams} />
+        <TeamSwitcher teams={dataaa.teams} />
       </SidebarHeader>
       <SidebarContent>
-        <NavMain items={data.navMain} />
-        <NavProjects projects={data.projects} />
+        <NavMain items={navMain} />
       </SidebarContent>
       <SidebarFooter>
-        <NavUser user={data.user} />
+        <NavUser />
       </SidebarFooter>
       <SidebarRail />
     </Sidebar>
