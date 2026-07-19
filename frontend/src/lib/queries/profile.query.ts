@@ -13,7 +13,7 @@ import type {
 import type { MutationConfig } from "../types/query.type";
 
 // get profile
-const accessToken = useAuthStore.getState().accessToken;
+const getAccessToken = () => useAuthStore.getState().accessToken;
 
 const getProfileQueryKey = () => ["profile", "get"];
 const getProfileQueryOptions = () => {
@@ -26,7 +26,7 @@ const getProfileQueryOptions = () => {
 export const useGetProfile = () => {
   return useQuery({
     ...getProfileQueryOptions(),
-    enabled: !!accessToken,
+    enabled: !!getAccessToken,
     staleTime: 1000 * 60 * 60, // 1 hour
     refetchOnWindowFocus: false,
   });

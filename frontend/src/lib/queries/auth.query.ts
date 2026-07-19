@@ -11,7 +11,7 @@ import type { MutationConfig } from "../types/query.type";
 import type { CreateUserInput } from "../types/user.type";
 
 // auth me query
-const accessToken = useAuthStore.getState().accessToken;
+const getAccessToken = () => useAuthStore.getState().accessToken;
 
 const getAuthQueryKey = (key: string) => ["auth", key];
 
@@ -25,7 +25,7 @@ const getAuthMeQueryOptions = () => {
 export const useAuthMe = () => {
   return useQuery({
     ...getAuthMeQueryOptions(),
-    enabled: !!accessToken,
+    enabled: !!getAccessToken,
     retry: false,
     staleTime: Infinity,
   });
