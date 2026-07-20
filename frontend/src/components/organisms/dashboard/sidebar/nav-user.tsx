@@ -2,7 +2,6 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   DropdownMenu,
   DropdownMenuContent,
-  DropdownMenuGroup,
   DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuSeparator,
@@ -15,18 +14,16 @@ import {
   useSidebar,
 } from "@/components/ui/sidebar";
 import { HugeiconsIcon } from "@hugeicons/react";
-import {
-  UnfoldMoreIcon,
-  SparklesIcon,
-  CheckmarkBadgeIcon,
-  CreditCardIcon,
-  NotificationIcon,
-  LogoutIcon,
-} from "@hugeicons/core-free-icons";
+import { UnfoldMoreIcon, LogoutIcon } from "@hugeicons/core-free-icons";
 import { useGetProfile } from "@/lib/queries/profile.query";
 import { getUiAvatarUrlRandomColor } from "@/lib/utils/avatar-generate.utils";
-import { useAuthMe } from "@/lib/queries/auth.query";
+import { useAuthLogout, useAuthMe } from "@/lib/queries/auth.query";
+import { useAuthStore } from "@/store/auth.store";
+import { navigateTo } from "@/lib/utils/navigate.utils";
+import { useProfileStore } from "@/store/profile.store";
+import { useQueryClient } from "@tanstack/react-query";
 
+// function reusable untuk avatar url
 const getAvatarImageUrl = (
   avatarUrl: string | undefined | null,
   displayname: string | undefined | null,
@@ -38,27 +35,56 @@ const getAvatarImageUrl = (
 };
 
 export function NavUser() {
+  // mobile device hook
   const { isMobile } = useSidebar();
+  // store
+  const logoutAuthStore = useAuthStore((s) => s.logout);
+  const resetProfile = useProfileStore((s) => s.resetProfile);
+  // query client
+  const queryClient = useQueryClient();
 
-  const {
-    data: profileData,
-    isLoading: profileLoading,
-    isError: profileError,
-  } = useGetProfile();
+  // get user
   const {
     data: userData,
     isLoading: userLoading,
     isError: userError,
   } = useAuthMe();
+  // get user profile
+  const {
+    data: profileData,
+    isLoading: profileLoading,
+    isError: profileError,
+  } = useGetProfile();
+
+  // lebih reusable
   const avatarImageUrl = getAvatarImageUrl(
     profileData?.data?.avatarUrl,
     profileData?.data?.displayName,
     userData?.data?.name ?? "unknown",
   );
 
+  // mutate logout query, success() ====>> clear ====>> navigate to login page
+  const mutateLogout = useAuthLogout({
+    mutationConfig: {
+      onSuccess: () => {
+        // clear semua query
+        queryClient.clear();
+        logoutAuthStore();
+        resetProfile();
+        // gak perlu, karena udah di protected route nge-handle ----
+        navigateTo("/sign-in");
+        // --> buat jaga"
+      },
+    },
+  });
+
   if (profileLoading || userLoading) return <h1>woop.</h1>;
   if (profileError) alert("profile error");
   if (userError) alert("user Error");
+
+  const logoutHandler = async () => {
+    await mutateLogout.mutateAsync(undefined);
+  };
 
   return (
     <SidebarMenu>
@@ -117,29 +143,7 @@ export function NavUser() {
               </div>
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
-            <DropdownMenuGroup>
-              <DropdownMenuItem>
-                <HugeiconsIcon icon={SparklesIcon} strokeWidth={2} />
-                Upgrade to Pro
-              </DropdownMenuItem>
-            </DropdownMenuGroup>
-            <DropdownMenuSeparator />
-            <DropdownMenuGroup>
-              <DropdownMenuItem>
-                <HugeiconsIcon icon={CheckmarkBadgeIcon} strokeWidth={2} />
-                Account
-              </DropdownMenuItem>
-              <DropdownMenuItem>
-                <HugeiconsIcon icon={CreditCardIcon} strokeWidth={2} />
-                Billing
-              </DropdownMenuItem>
-              <DropdownMenuItem>
-                <HugeiconsIcon icon={NotificationIcon} strokeWidth={2} />
-                Notifications
-              </DropdownMenuItem>
-            </DropdownMenuGroup>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem>
+            <DropdownMenuItem onClick={logoutHandler}>
               <HugeiconsIcon icon={LogoutIcon} strokeWidth={2} />
               Log out
             </DropdownMenuItem>
