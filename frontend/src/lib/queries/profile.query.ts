@@ -15,7 +15,8 @@ import type { MutationConfig } from "../types/query.type";
 // get profile
 const getAccessToken = () => useAuthStore.getState().accessToken;
 
-const getProfileQueryKey = () => ["profile", "get"];
+export const getProfileQueryKey = () => ["profile", "get"];
+
 const getProfileQueryOptions = () => {
   return {
     queryKey: getProfileQueryKey(),

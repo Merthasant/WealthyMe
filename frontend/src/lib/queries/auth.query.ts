@@ -11,13 +11,13 @@ import type { MutationConfig } from "../types/query.type";
 import type { CreateUserInput } from "../types/user.type";
 
 // auth me query
-const getAccessToken = () => useAuthStore.getState().accessToken;
+export const getAccessToken = () => useAuthStore.getState().accessToken;
 
-const getAuthQueryKey = (key: string) => ["auth", key];
+export const getAuthQueryKey = () => ["auth", "me"];
 
 const getAuthMeQueryOptions = () => {
   return queryOptions({
-    queryKey: getAuthQueryKey("me"),
+    queryKey: getAuthQueryKey(),
     queryFn: authMe,
   });
 };

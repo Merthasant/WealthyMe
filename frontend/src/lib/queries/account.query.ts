@@ -9,35 +9,35 @@ import {
 import type { MutationConfig, QueryConfig } from "../types/query.type";
 import type { CreateAccountDTO, UpdateAccountDTO } from "../types/account.type";
 
-const getQueryKeyAccount = (key: string, id?: string) => ["account", key, id];
+export const getQueryKeyOneAccount = (id: string) => ["account", "one", id];
 
 // get one account
 const getQueryOptionsOneAccount = (id: string) => {
   return queryOptions({
-    queryKey: getQueryKeyAccount("one", id),
+    queryKey: getQueryKeyOneAccount(id),
     queryFn: () => getOneAccount(id),
   });
 };
 
 type UseGetOneAccountParams = {
   queryConfig?: QueryConfig<typeof getQueryOptionsOneAccount>;
+  id: string;
 };
 
-export const useGetOneAccount = (
-  id: string,
-  params: UseGetOneAccountParams = {},
-) => {
+export const useGetOneAccount = (params: UseGetOneAccountParams) => {
   return useQuery({
-    ...getQueryOptionsOneAccount(id),
-    ...params?.queryConfig,
+    ...getQueryOptionsOneAccount(params.id),
+    ...params.queryConfig,
   });
 };
 
 // get all account
 
+export const getQueryKeyAllAccount = () => ["account", "all"];
+
 const getQueryOptionsAllAccount = () => {
   return queryOptions({
-    queryKey: getQueryKeyAccount("all"),
+    queryKey: getQueryKeyAllAccount(),
     queryFn: getAllAccounts,
   });
 };
@@ -49,7 +49,7 @@ type UseGetAllAccountParams = {
 export const useGetAllAccount = (params: UseGetAllAccountParams = {}) => {
   return useQuery({
     ...getQueryOptionsAllAccount(),
-    ...params?.queryConfig,
+    ...params.queryConfig,
   });
 };
 
@@ -59,13 +59,10 @@ type CreateAccountParams = {
   mutationConfig?: MutationConfig<typeof createAccount>;
 };
 
-export const useCreateAccount = (
-  dto: CreateAccountDTO,
-  params: CreateAccountParams = {},
-) => {
+export const useCreateAccount = (params: CreateAccountParams = {}) => {
   return useMutation({
-    mutationFn: () => createAccount(dto),
-    ...params?.mutationConfig,
+    mutationFn: (data: CreateAccountDTO) => createAccount(data),
+    ...params.mutationConfig,
   });
 };
 
@@ -75,13 +72,10 @@ type UpdateAccountParams = {
   mutationConfig?: MutationConfig<typeof updateAccount>;
 };
 
-export const useUpdateAccount = (
-  dto: UpdateAccountDTO,
-  params: UpdateAccountParams = {},
-) => {
+export const useUpdateAccount = (params: UpdateAccountParams = {}) => {
   return useMutation({
-    mutationFn: () => updateAccount(dto),
-    ...params?.mutationConfig,
+    mutationFn: (data: UpdateAccountDTO) => updateAccount(data),
+    ...params.mutationConfig,
   });
 };
 
@@ -91,12 +85,9 @@ type DeleteAccountParams = {
   mutationConfig?: MutationConfig<typeof deleteAccount>;
 };
 
-export const useDeleteAccount = (
-  id: string,
-  params: DeleteAccountParams = {},
-) => {
+export const useDeleteAccount = (params: DeleteAccountParams = {}) => {
   return useMutation({
-    mutationFn: () => deleteAccount(id),
-    ...params?.mutationConfig,
+    mutationFn: (id: string) => deleteAccount(id),
+    ...params.mutationConfig,
   });
 };
