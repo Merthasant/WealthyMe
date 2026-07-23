@@ -13,10 +13,9 @@ import {
   SidebarMenuSubButton,
   SidebarMenuSubItem,
 } from "@/components/ui/sidebar";
-import { HugeiconsIcon } from "@hugeicons/react";
-import { ArrowRight01Icon } from "@hugeicons/core-free-icons";
 import { Link } from "react-router-dom";
 import type { NavMainType } from "@/lib/types/dashboard.type";
+import { ArrowRight } from "lucide-react";
 
 export function NavMain({
   items,
@@ -41,13 +40,9 @@ export function NavMain({
                 <SidebarMenuItem>
                   <CollapsibleTrigger asChild>
                     <SidebarMenuButton tooltip={item.title}>
-                      {item.icon}
+                      {item.icon && <item.icon />}
                       <span>{item.title}</span>
-                      <HugeiconsIcon
-                        icon={ArrowRight01Icon}
-                        strokeWidth={2}
-                        className="ml-auto transition-transform duration-200 group-data-[state=open]/collapsible:rotate-90"
-                      />
+                      <ArrowRight className="ml-auto transition-transform duration-200 group-data-[state=open]/collapsible:rotate-90" />
                     </SidebarMenuButton>
                   </CollapsibleTrigger>
                   <CollapsibleContent>
@@ -56,7 +51,7 @@ export function NavMain({
                         <SidebarMenuSubItem key={subItem.title}>
                           <Link to={item.url}>
                             <SidebarMenuSubButton>
-                              {item.icon}
+                              {item.icon && <item.icon />}
                               {item.title}
                             </SidebarMenuSubButton>
                           </Link>
@@ -71,7 +66,7 @@ export function NavMain({
             <SidebarMenuItem key={item.title}>
               <Link to={item.url}>
                 <SidebarMenuButton tooltip={item.title}>
-                  {item.icon}
+                  {item.icon && <item.icon />}
                   {item.title}
                 </SidebarMenuButton>
               </Link>

@@ -12,20 +12,16 @@ import {
   SidebarHeader,
   SidebarRail,
 } from "@/components/ui/sidebar";
-import { HugeiconsIcon } from "@hugeicons/react";
 import {
-  LayoutBottomIcon,
-  AudioWave01Icon,
-  CommandIcon,
-  CropIcon,
-  PieChartIcon,
-  MapsIcon,
-  DashboardSquare02Icon,
-  Wallet01Icon,
-  TagsIcon,
-  AccountSetting01Icon,
-  TransactionHistoryIcon,
-} from "@hugeicons/core-free-icons";
+  AudioWaveform,
+  Command,
+  GalleryVerticalEnd,
+  History,
+  LayoutDashboard,
+  Tags,
+  User,
+  Wallet,
+} from "lucide-react";
 import type { NavMainType } from "@/lib/types/dashboard.type";
 
 // This is sample data.
@@ -38,35 +34,18 @@ const dataaa = {
   teams: [
     {
       name: "Acme Inc",
-      logo: <HugeiconsIcon icon={LayoutBottomIcon} strokeWidth={2} />,
+      logo: GalleryVerticalEnd,
       plan: "Enterprise",
     },
     {
       name: "Acme Corp.",
-      logo: <HugeiconsIcon icon={AudioWave01Icon} strokeWidth={2} />,
+      logo: AudioWaveform,
       plan: "Startup",
     },
     {
       name: "Evil Corp.",
-      logo: <HugeiconsIcon icon={CommandIcon} strokeWidth={2} />,
+      logo: Command,
       plan: "Free",
-    },
-  ],
-  projects: [
-    {
-      name: "Design Engineering",
-      url: "#",
-      icon: <HugeiconsIcon icon={CropIcon} strokeWidth={2} />,
-    },
-    {
-      name: "Sales & Marketing",
-      url: "#",
-      icon: <HugeiconsIcon icon={PieChartIcon} strokeWidth={2} />,
-    },
-    {
-      name: "Travel",
-      url: "#",
-      icon: <HugeiconsIcon icon={MapsIcon} strokeWidth={2} />,
     },
   ],
 };
@@ -75,29 +54,29 @@ const navMain: NavMainType = [
   {
     title: "Dashboard",
     url: "/dashboard",
-    icon: <HugeiconsIcon icon={DashboardSquare02Icon} strokeWidth={2} />,
+    icon: LayoutDashboard,
     isActive: true,
   },
   {
     title: "Transactions",
     url: "transactions",
-    icon: <HugeiconsIcon icon={TransactionHistoryIcon} strokeWidth={2} />,
+    icon: History,
     isActive: false,
   },
   {
     title: "Accounts",
     url: "accounts",
-    icon: <HugeiconsIcon icon={Wallet01Icon} strokeWidth={2} />,
+    icon: Wallet,
   },
   {
     title: "Categories",
     url: "categories",
-    icon: <HugeiconsIcon icon={TagsIcon} strokeWidth={2} />,
+    icon: Tags,
   },
   {
     title: "Profile",
     url: "profile",
-    icon: <HugeiconsIcon icon={AccountSetting01Icon} strokeWidth={2} />,
+    icon: User,
   },
 ];
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {

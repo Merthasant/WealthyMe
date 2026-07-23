@@ -17,15 +17,14 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from "@/components/ui/sidebar";
-import { HugeiconsIcon } from "@hugeicons/react";
-import { UnfoldMoreIcon, PlusSignIcon } from "@hugeicons/core-free-icons";
+import { ChevronsUpDown, Plus } from "lucide-react";
 
 export function TeamSwitcher({
   teams,
 }: {
   teams: {
     name: string;
-    logo: React.ReactNode;
+    logo: React.ElementType;
     plan: string;
   }[];
 }) {
@@ -46,17 +45,13 @@ export function TeamSwitcher({
               className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
             >
               <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-sidebar-primary text-sidebar-primary-foreground">
-                {activeTeam.logo}
+                <activeTeam.logo />
               </div>
               <div className="grid flex-1 text-left text-sm leading-tight">
                 <span className="truncate font-medium">{activeTeam.name}</span>
                 <span className="truncate text-xs">{activeTeam.plan}</span>
               </div>
-              <HugeiconsIcon
-                icon={UnfoldMoreIcon}
-                strokeWidth={2}
-                className="ml-auto"
-              />
+              <ChevronsUpDown className="ml-auto" />
             </SidebarMenuButton>
           </DropdownMenuTrigger>
           <DropdownMenuContent
@@ -75,7 +70,7 @@ export function TeamSwitcher({
                 className="gap-2 p-2"
               >
                 <div className="flex size-6 items-center justify-center rounded-md border">
-                  {team.logo}
+                  <team.logo />
                 </div>
                 {team.name}
                 <DropdownMenuShortcut>⌘{index + 1}</DropdownMenuShortcut>
@@ -84,11 +79,7 @@ export function TeamSwitcher({
             <DropdownMenuSeparator />
             <DropdownMenuItem className="gap-2 p-2">
               <div className="flex size-6 items-center justify-center rounded-md border bg-transparent">
-                <HugeiconsIcon
-                  icon={PlusSignIcon}
-                  strokeWidth={2}
-                  className="size-4"
-                />
+                <Plus className="size-4" />
               </div>
               <div className="font-medium text-muted-foreground">Add team</div>
             </DropdownMenuItem>

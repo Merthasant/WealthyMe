@@ -13,8 +13,6 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from "@/components/ui/sidebar";
-import { HugeiconsIcon } from "@hugeicons/react";
-import { UnfoldMoreIcon, LogoutIcon } from "@hugeicons/core-free-icons";
 import { useGetProfile } from "@/lib/queries/profile.query";
 import { getUiAvatarUrlRandomColor } from "@/lib/utils/avatar-generate.utils";
 import { useAuthLogout, useAuthMe } from "@/lib/queries/auth.query";
@@ -22,6 +20,7 @@ import { useAuthStore } from "@/store/auth.store";
 import { navigateTo } from "@/lib/utils/navigate.utils";
 import { useProfileStore } from "@/store/profile.store";
 import { useQueryClient } from "@tanstack/react-query";
+import { ChevronsUpDown, LogOut } from "lucide-react";
 
 // function reusable untuk avatar url
 const getAvatarImageUrl = (
@@ -110,11 +109,7 @@ export function NavUser() {
                   {userData?.data?.email ?? "unknown"}
                 </span>
               </div>
-              <HugeiconsIcon
-                icon={UnfoldMoreIcon}
-                strokeWidth={2}
-                className="ml-auto size-4"
-              />
+              <ChevronsUpDown className="ml-auto size-4" />
             </SidebarMenuButton>
           </DropdownMenuTrigger>
           <DropdownMenuContent
@@ -144,7 +139,7 @@ export function NavUser() {
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
             <DropdownMenuItem onClick={logoutHandler}>
-              <HugeiconsIcon icon={LogoutIcon} strokeWidth={2} />
+              <LogOut />
               Log out
             </DropdownMenuItem>
           </DropdownMenuContent>
