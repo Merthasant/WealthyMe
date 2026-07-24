@@ -52,7 +52,7 @@ const accountService = {
       search = "",
       sortBy = "updatedAt",
       sortOrder = "asc",
-      type = undefined,
+      type = "all",
     } = options;
 
     const skip = (page - 1) * limit;
@@ -66,6 +66,8 @@ const accountService = {
             { type: { equals: type } },
           ];
         else where.OR = [{ name: { contains: search, mode: "insensitive" } }];
+      } else {
+        if (type !== "all") where.OR = [{ type: { equals: type } }];
       }
 
       const [userData, total] = await tx.$transaction([
