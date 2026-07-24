@@ -22,61 +22,70 @@ import HaveProfileRoute from "./routes/have-profile.route";
 import AdminRoute from "./routes/admin.route";
 import AccessDinied from "./pages/access-denied.page";
 import ProfileChecker from "./checker/profile.checker";
+import { ThemeProvider } from "./provider/theme-provider";
 
 export default function App() {
   return (
-    <Router>
-      <NavigateSetter />
-      <Routes>
-        {/* Public Routes */}
-        <Route element={<PublicRoute />}>
-          <Route element={<AuthLayout />}>
-            <Route path="sign-in" element={<LoginPage />} />
-            <Route path="sign-up" element={<RegisterPage />} />
-          </Route>
-        </Route>
-
-        {/* Protected Routes*/}
-        <Route element={<ProtectedRoute />}>
-          <Route element={<ProfileChecker />}>
-            {/* Don't have Profile Routes */}
-            <Route element={<DontHaveProfileRoute />}>
-              {/* Onboarding Route */}
-              <Route path="onBoarding" element={<OnBoardingLayout />}>
-                <Route index element={<OnBroadingMainPage />} />
-                <Route path="create-profile" element={<CreateProfilePage />} />
-              </Route>
+    <ThemeProvider defaultTheme="light" storageKey="vite-ui-theme">
+      <Router>
+        <NavigateSetter />
+        <Routes>
+          {/* Public Routes */}
+          <Route element={<PublicRoute />}>
+            <Route element={<AuthLayout />}>
+              <Route path="sign-in" element={<LoginPage />} />
+              <Route path="sign-up" element={<RegisterPage />} />
             </Route>
+          </Route>
 
-            {/* Have Profile Routes */}
-            <Route element={<HaveProfileRoute />}>
-              <Route path="dashboard" element={<DashboardLayout />}>
-                {/* User Routes */}
-                <Route index element={<DashboardPage />} />
-                <Route path="transactions" element={<TransactionListPage />} />
-                <Route
-                  path="transaction/:id"
-                  element={<TransactionDetailPage />}
-                />
-                <Route path="accounts" element={<AccountPage />} />
-                <Route path="categories" element={<CategoriesPage />} />
-                <Route path="profile" element={<ProfilePage />} />
+          {/* Protected Routes*/}
+          <Route element={<ProtectedRoute />}>
+            <Route element={<ProfileChecker />}>
+              {/* Don't have Profile Routes */}
+              <Route element={<DontHaveProfileRoute />}>
+                {/* Onboarding Route */}
+                <Route path="onBoarding" element={<OnBoardingLayout />}>
+                  <Route index element={<OnBroadingMainPage />} />
+                  <Route
+                    path="create-profile"
+                    element={<CreateProfilePage />}
+                  />
+                </Route>
+              </Route>
 
-                {/* Admin Routes */}
-                <Route element={<AdminRoute />}>
-                  <Route path="admin" element={<AdminPage />} />
+              {/* Have Profile Routes */}
+              <Route element={<HaveProfileRoute />}>
+                <Route path="dashboard" element={<DashboardLayout />}>
+                  {/* User Routes */}
+                  <Route index element={<DashboardPage />} />
+                  <Route
+                    path="transactions"
+                    element={<TransactionListPage />}
+                  />
+                  <Route
+                    path="transaction/:id"
+                    element={<TransactionDetailPage />}
+                  />
+                  <Route path="accounts" element={<AccountPage />} />
+                  <Route path="categories" element={<CategoriesPage />} />
+                  <Route path="profile" element={<ProfilePage />} />
+
+                  {/* Admin Routes */}
+                  <Route element={<AdminRoute />}>
+                    <Route path="admin" element={<AdminPage />} />
+                  </Route>
                 </Route>
               </Route>
             </Route>
           </Route>
-        </Route>
 
-        {/* access dinied */}
-        <Route path="access-dinied" element={<AccessDinied />} />
+          {/* access dinied */}
+          <Route path="access-dinied" element={<AccessDinied />} />
 
-        {/* Catch-all route for 404 */}
-        <Route path="*" element={<NotFoundPage />} />
-      </Routes>
-    </Router>
+          {/* Catch-all route for 404 */}
+          <Route path="*" element={<NotFoundPage />} />
+        </Routes>
+      </Router>
+    </ThemeProvider>
   );
 }
