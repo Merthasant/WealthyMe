@@ -1,14 +1,17 @@
 import { z } from "zod";
 
+const baseSortByOption = ["createdAt", "updatedAt"] as const;
+
 export const baseOptionSchema = z.object({
   page: z.coerce.number().int().positive().default(1),
   limit: z.coerce.number().int().positive().default(10),
   search: z.string().default(""),
-  sortBy: z.string().default("updatedAt"),
+  sortBy: z.enum(["createdAt", "updatedAt"]).default("updatedAt"),
   sortOrder: z.enum(["asc", "desc"]).default("asc"),
 });
 
 export const accountOptionSchema = baseOptionSchema.extend({
+  sortBy: z.enum([...baseSortByOption, "balance"]).default("updatedAt"),
   type: z
     .enum(["cash", "e_wallet", "bank", "investment", "all"])
     .default("all"),
@@ -19,6 +22,9 @@ export const categoryOptionSchema = baseOptionSchema.extend({
 });
 
 export const transactionOptionSchema = baseOptionSchema.extend({
+  sortBy: z
+    .enum([...baseSortByOption, "amount", "transactionAt"])
+    .default("transactionAt"),
   type: z.enum(["income", "expense", "all"]).default("all"),
   from_date: z.coerce.number().optional(),
   to_date: z.coerce.number().optional(),
