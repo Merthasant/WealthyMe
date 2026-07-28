@@ -5,6 +5,7 @@ import type {
 } from "@/lib/types/account.type";
 import type { ApiResponse } from "@/lib/types/api.type";
 import instance from "../axios";
+import type { AccountOptionParams } from "@/lib/types/options-param";
 
 // create account
 export const createAccount = async (
@@ -23,8 +24,19 @@ export const getOneAccount = async (
 };
 
 // get all accounts
-export const getAllAccounts = async (): Promise<ApiResponse<Accounts[]>> => {
-  const res = await instance.get<ApiResponse<Accounts[]>>("/account");
+export const getAllAccounts = async (
+  params: AccountOptionParams = {
+    limit: 25,
+    page: 1,
+    search: "",
+    sortBy: "updatedAt",
+    sortOrder: "desc",
+    type: "all",
+  },
+): Promise<ApiResponse<Accounts[]>> => {
+  const res = await instance.get<ApiResponse<Accounts[]>>("/account", {
+    params,
+  });
   return res.data;
 };
 

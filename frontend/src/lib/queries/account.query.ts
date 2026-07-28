@@ -8,6 +8,7 @@ import {
 } from "../APIs/services/account.service";
 import type { MutationConfig, QueryConfig } from "../types/query.type";
 import type { CreateAccountDTO, UpdateAccountDTO } from "../types/account.type";
+import type { AccountOptionParams } from "../types/options-param";
 
 export const getQueryKeyOneAccount = (id: string) => ["account", "one", id];
 
@@ -35,20 +36,21 @@ export const useGetOneAccount = (params: UseGetOneAccountParams) => {
 
 export const getQueryKeyAllAccount = () => ["account", "all"];
 
-const getQueryOptionsAllAccount = () => {
+const getQueryOptionsAllAccount = (params: AccountOptionParams) => {
   return queryOptions({
     queryKey: getQueryKeyAllAccount(),
-    queryFn: getAllAccounts,
+    queryFn: () => getAllAccounts(params),
   });
 };
 
 type UseGetAllAccountParams = {
   queryConfig?: QueryConfig<typeof getQueryOptionsAllAccount>;
+  optionParams: AccountOptionParams;
 };
 
-export const useGetAllAccount = (params: UseGetAllAccountParams = {}) => {
+export const useGetAllAccount = (params: UseGetAllAccountParams) => {
   return useQuery({
-    ...getQueryOptionsAllAccount(),
+    ...getQueryOptionsAllAccount(params.optionParams),
     ...params.queryConfig,
   });
 };
