@@ -29,6 +29,7 @@ model user {
   @@index([updatedAt])
 }
 
+// mungkin table role akan dihapus, jika ya makan user akan menambah column role
 model role {
   id        String @id @default(uuid())
   name      roles  @default(user)
@@ -87,6 +88,7 @@ model account {
   id            String       @id @default(uuid())
   name          String
   type          walletType   @default(cash)
+  // nanti column balance akan di hapus
   balance       Decimal      @db.Decimal(15, 2)
   currency_code currencyType
   userId        String
@@ -103,6 +105,7 @@ model account {
 }
 
 enum transactionType {
+  // type transfer akan bertambah
   income
   expense
 }
@@ -125,9 +128,14 @@ model category {
 
 model transaction {
   id              String          @id @default(uuid())
+  // amount akan jadi type bigint, usd,sgd,eur mungkin akan menjadi satuan terkecil tanpa coma
   amount          Decimal         @db.Decimal(15, 2)
+  // column amount in idr akan ada untuk sorting
   type            transactionType
   note            String?
+  // column transferId akan
+  // column typeTransfer in/out akan ada juga
+  // column fee transfer
   transactionAt   Int
   deletedAt       Int?
   receiptUrl      String?
@@ -147,3 +155,5 @@ model transaction {
   @@index([type])
   @@index([deletedAt])
 }
+
+// akan menambah table budget 1-1 ke category (mungkin) dan table tagging
