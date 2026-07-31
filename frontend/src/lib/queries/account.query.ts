@@ -34,11 +34,27 @@ export const useGetOneAccount = (params: UseGetOneAccountParams) => {
 
 // get all account
 
-export const getQueryKeyAllAccount = () => ["account", "all"];
+export const getQueryKeyAllAccount = ({
+  page,
+  limit,
+  search,
+  sortBy,
+  sortOrder,
+  type,
+}: AccountOptionParams) => [
+  "account",
+  "all",
+  page,
+  limit,
+  search,
+  sortBy,
+  sortOrder,
+  type,
+];
 
 const getQueryOptionsAllAccount = (params: AccountOptionParams) => {
   return queryOptions({
-    queryKey: getQueryKeyAllAccount(),
+    queryKey: getQueryKeyAllAccount(params),
     queryFn: () => getAllAccounts(params),
   });
 };
