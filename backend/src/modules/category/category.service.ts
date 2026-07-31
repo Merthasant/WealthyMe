@@ -52,9 +52,12 @@ const categoryService = {
               where,
               skip,
               take: limit,
-              orderBy: {
-                [sortBy]: sortOrder,
-              },
+              orderBy: [
+                {
+                  [sortBy]: sortOrder,
+                },
+                { id: sortOrder },
+              ],
               select: categorySelect,
             },
           },

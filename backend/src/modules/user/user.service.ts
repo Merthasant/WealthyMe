@@ -59,9 +59,12 @@ const userService = {
         select: userSelectExcPass,
         take: limit,
         skip,
-        orderBy: {
-          [sortBy]: sortOrder,
-        },
+        orderBy: [
+          {
+            [sortBy]: sortOrder,
+          },
+          { id: sortOrder },
+        ],
       }),
       prisma.user.count({ where }),
     ]);

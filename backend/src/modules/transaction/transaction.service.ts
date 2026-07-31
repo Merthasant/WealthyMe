@@ -120,7 +120,7 @@ const transactionService = {
           where,
           skip,
           take: limit,
-          orderBy: { [sortBy]: sortOrder },
+          orderBy: [{ [sortBy]: sortOrder }, { id: sortOrder }],
         }),
         tx.transaction.count({ where }),
       ]);
@@ -181,9 +181,12 @@ const transactionService = {
           currency_code: true,
           transactionAt: true,
         },
-        orderBy: {
-          transactionAt: "asc",
-        },
+        orderBy: [
+          {
+            transactionAt: "asc",
+          },
+          { id: "asc" },
+        ],
       });
     });
   },
