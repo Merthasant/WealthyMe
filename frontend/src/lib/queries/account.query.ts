@@ -7,8 +7,11 @@ import {
   updateAccount,
 } from "../APIs/services/account.service";
 import type { MutationConfig, QueryConfig } from "../types/query.type";
-import type { CreateAccountDTO, UpdateAccountDTO } from "../types/account.type";
 import type { AccountOptionParams } from "../types/options-param";
+import { useAccountStore } from "@/store/account.store";
+
+export const idAccountSelected = () =>
+  useAccountStore.getState().idAccountSelected;
 
 export const getQueryKeyOneAccount = (id: string) => ["account", "one", id];
 
@@ -79,7 +82,7 @@ type CreateAccountParams = {
 
 export const useCreateAccount = (params: CreateAccountParams = {}) => {
   return useMutation({
-    mutationFn: (data: CreateAccountDTO) => createAccount(data),
+    mutationFn: createAccount,
     ...params.mutationConfig,
   });
 };
@@ -92,7 +95,7 @@ type UpdateAccountParams = {
 
 export const useUpdateAccount = (params: UpdateAccountParams = {}) => {
   return useMutation({
-    mutationFn: (data: UpdateAccountDTO) => updateAccount(data),
+    mutationFn: updateAccount,
     ...params.mutationConfig,
   });
 };
@@ -105,7 +108,7 @@ type DeleteAccountParams = {
 
 export const useDeleteAccount = (params: DeleteAccountParams = {}) => {
   return useMutation({
-    mutationFn: (id: string) => deleteAccount(id),
+    mutationFn: deleteAccount,
     ...params.mutationConfig,
   });
 };

@@ -41,10 +41,17 @@ export const getAllAccounts = async (
 };
 
 // update account
-export const updateAccount = async (
-  dto: UpdateAccountDTO,
-): Promise<ApiResponse<Accounts>> => {
-  const res = await instance.patch<ApiResponse<Accounts>>("/account", dto);
+export const updateAccount = async ({
+  dto,
+  id,
+}: {
+  dto: UpdateAccountDTO;
+  id: string;
+}): Promise<ApiResponse<Accounts>> => {
+  const res = await instance.patch<ApiResponse<Accounts>>(
+    `/account/${id}`,
+    dto,
+  );
   return res.data;
 };
 
