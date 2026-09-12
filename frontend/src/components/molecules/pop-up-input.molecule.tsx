@@ -8,8 +8,7 @@ import {
   DialogTrigger,
 } from "../ui/dialog";
 import { Button } from "../ui/button";
-import { useState, type ComponentProps, type ReactNode } from "react";
-import { cn } from "@/lib/utils";
+import { useState, type ReactElement, type ReactNode } from "react";
 import {
   Drawer,
   DrawerClose,
@@ -20,32 +19,34 @@ import {
   DrawerTrigger,
 } from "../ui/drawer";
 
-interface PopUpInputProps extends ComponentProps<"button"> {
-  buttonLabel?: string;
+interface PopUpInputProps {
   titleContent?: string;
   descriptionContent?: string;
   children?: ReactNode;
+  triggerComponent?: ReactElement;
+  // optional props jika mau control di parent component
+  openProp?: boolean;
+  onOpenChangeProp?: (open: boolean) => void;
 }
 
 export default function PopUpInput({
-  buttonLabel = "button label",
   titleContent = "title content",
   descriptionContent = "description content",
   children = <h1>Default Content</h1>,
-  className,
-  ...props
+  triggerComponent = <Button>Open</Button>,
+  openProp,
+  onOpenChangeProp,
 }: PopUpInputProps) {
   const [open, setOpen] = useState(false);
   const isMobile = useIsMobile();
 
   if (isMobile) {
     return (
-      <Drawer open={open} onOpenChange={setOpen}>
-        <DrawerTrigger asChild>
-          <Button className={cn("", className)} {...props}>
-            {buttonLabel}
-          </Button>
-        </DrawerTrigger>
+      <Drawer
+        open={openProp ?? open}
+        onOpenChange={onOpenChangeProp ?? setOpen}
+      >
+        <DrawerTrigger asChild>{triggerComponent}</DrawerTrigger>
         <DrawerContent>
           <DrawerHeader>
             <DrawerTitle>{titleContent}</DrawerTitle>
@@ -63,12 +64,8 @@ export default function PopUpInput({
   }
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        <Button className={cn("", className)} {...props}>
-          {buttonLabel}
-        </Button>
-      </DialogTrigger>
+    <Dialog open={openProp ?? open} onOpenChange={onOpenChangeProp ?? setOpen}>
+      <DialogTrigger asChild>{triggerComponent}</DialogTrigger>
       <DialogContent>
         <DialogHeader>
           <DialogTitle>{titleContent}</DialogTitle>
