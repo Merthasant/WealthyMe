@@ -1,5 +1,5 @@
 import { DynamicIcon } from "@/components/dynamic-icon";
-import PopUpInput from "@/components/molecules/pop-up-input.molecule";
+import AccountFilters from "@/components/organisms/account/account-filters";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -33,27 +33,19 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import {
   getQueryKeyAllAccount,
   getQueryKeyOneAccount,
-  useCreateAccount,
   useGetAllAccount,
   useGetOneAccount,
   useUpdateAccount,
 } from "@/lib/queries/account.query";
 import {
   accountTypeList,
-  createAccountSchema,
   currencyCodeList,
   updateAccountSchema,
   type Accounts,
-  type CreateAccountDTO,
   type UpdateAccountDTO,
 } from "@/lib/types/account.type";
 import type { ChildrenProps } from "@/lib/types/components.type";
-import type {
-  AccountOptionParams,
-  AccountSoryByParam,
-  AccountTypeParam,
-  SortOrderParam,
-} from "@/lib/types/options-param";
+import type { AccountOptionParams } from "@/lib/types/options-param";
 import { formatCurrency } from "@/lib/utils/currency-format.utils";
 import { unixToRelativeTime } from "@/lib/utils/date.utils";
 import { getAccountIcon } from "@/lib/utils/get-account-icon.utils";
@@ -67,58 +59,39 @@ import { useUpdateSearchParams } from "@/lib/utils/set-params.utils";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useQueryClient } from "@tanstack/react-query";
 import {
-  ArrowUpDown,
   BookA,
   ChevronLeft,
   ChevronRight,
   CreditCard,
-  DiamondPlus,
   Receipt,
-  Search,
 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Controller, useForm, useWatch } from "react-hook-form";
 import { useSearchParams } from "react-router-dom";
-import { useDebounce } from "use-debounce";
 import type { z } from "zod";
 
 export default function AccountPage() {
   const [searchParams] = useSearchParams();
+
+  // update bulk params
   const updateParams = useUpdateSearchParams();
-  const queryClient = useQueryClient();
+
   const isMobile = useIsMobile();
 
+  // query params
   const page = getNumberParam(searchParams, "page", 1);
   const limit = getNumberParam(searchParams, "limit", 25);
   const search = searchParams.get("search") ?? "";
   const sortBy = getAccountSoryByParam(searchParams, "updatedAt");
-  const sortOrder = getSortOrderParam(searchParams, "asc");
+  const sortOrder = getSortOrderParam(searchParams, "desc");
   const type = getAccountTypeParam(searchParams, "all");
 
+  // get all accounts data
   const { data, isLoading, isError } = useGetAllAccount({
     optionParams: { page, limit, search, sortBy, sortOrder, type },
   });
 
-  // create account mutation
-  const createAccountMutate = useCreateAccount({
-    mutationConfig: {
-      onSuccess: () => {
-        queryClient.invalidateQueries({
-          queryKey: getQueryKeyAllAccount({
-            page,
-            limit,
-            search,
-            sortBy,
-            sortOrder,
-            type,
-          }),
-        });
-      },
-    },
-  });
-
   // get account by id query
-
   const [accountIdSelected, setAccountIdSelected] = useState<string | null>(
     null,
   );
@@ -130,88 +103,25 @@ export default function AccountPage() {
     },
   });
 
-  // form create account
-  const formCreateAccount = useForm<
-    z.input<typeof createAccountSchema>,
-    unknown,
-    z.output<typeof createAccountSchema>
-  >({
-    resolver: zodResolver(createAccountSchema),
-    defaultValues: {
-      name: "new account",
-      balance: 0,
-      type: "cash",
-      currency_code: "IDR",
-    },
-  });
+  // detail account handler
 
-  // create account handler
-
-  const [isCreateAccountOpen, setIsCreateAccountOpen] =
-    useState<boolean>(false);
-
-  const handleCreateAccount = async (data: CreateAccountDTO) => {
-    await createAccountMutate.mutateAsync(data);
-    setIsCreateAccountOpen(false);
-    formCreateAccount.reset();
-  };
-
-  // update account handler
-
-  const handleOpenUpdateAccount = (accountId: string) => {
+  const handleOpenAccountDetail = (accountId: string) => {
     setAccountIdSelected(accountId);
   };
-
-  // search Query
-  const [searchState, setSearchState] = useState<string>(search);
-  const [searchDebounce] = useDebounce(searchState, 1000);
-
-  // sort by query
-  const [sortByState, setSortByState] = useState<AccountSoryByParam>(sortBy);
-
-  // sort order query
-  const [sortOrderState, setSortOrderState] =
-    useState<SortOrderParam>(sortOrder);
-  const [isAsc, setIsAsc] = useState<boolean>(false);
-
-  const handleSortOrderState = () => {
-    setIsAsc(() => !isAsc);
-    if (isAsc) setSortOrderState("asc");
-    else setSortOrderState("desc");
-  };
-
-  // type query
-  const [typeState, setTypeState] = useState<AccountTypeParam>(type);
+  // limit query
+  const [limitState, setLimitState] = useState<number>(limit);
 
   // page query
   const [pageState, setPageState] = useState<number>(page);
-
   const handlePageState = (action: "prev" | "next") => {
     if (action === "prev") setPageState(() => pageState - 1);
     if (action === "next") setPageState(() => pageState + 1);
   };
 
-  // limit query
-  const [limitState, setLimitState] = useState<number>(limit);
-
-  // limit,search,sortBy,sortOrder,type watcher
+  // limit watcher
   useEffect(() => {
-    updateParams({
-      search: searchDebounce,
-      sortBy: sortByState,
-      sortOrder: sortOrderState,
-      type: typeState,
-      limit: limitState,
-      page: null,
-    });
-  }, [
-    updateParams,
-    searchDebounce,
-    sortByState,
-    sortOrderState,
-    typeState,
-    limitState,
-  ]);
+    updateParams({ limit: limitState });
+  }, [updateParams, limitState]);
 
   // page watcher
   useEffect(() => {
@@ -224,204 +134,9 @@ export default function AccountPage() {
 
   return (
     <section className="flex flex-col px-4 divide-y divide-accent group-has-data-[collapsible=icon]/sidebar-wrapper:py-4">
-      <div className="grid grid-cols-12 items-center gap-4 py-4 *:flex *:flex-col *:gap-2">
-        <span className="col-span-12 group-has-data-[collapsible=icon]/sidebar-wrapper:sm:col-span-6 group-has-data-[collapsible=icon]/sidebar-wrapper:lg:col-span-4 lg:col-span-6 xl:col-span-4">
-          <Label htmlFor="search-account" className="text-muted-foreground">
-            Search
-          </Label>
-          <Input
-            placeholder="search account..."
-            type="search"
-            id="search-account"
-            iconPosition="in"
-            icon={<Search className="text-muted-foreground" />}
-            value={searchState}
-            onChange={(e) => setSearchState(e.target.value)}
-          />
-        </span>
-
-        <span className="col-span-6 group-has-data-[collapsible=icon]/sidebar-wrapper:sm:col-span-3 lg:col-span-3">
-          <Label htmlFor="sort-by" className="text-muted-foreground">
-            Sort By
-          </Label>
-          <Select
-            value={sortByState}
-            onValueChange={(v) => setSortByState(v as AccountSoryByParam)}
-          >
-            <SelectTrigger className="w-full" id="sort-by">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent position="popper">
-              <SelectGroup>
-                <SelectItem value="balance">balance</SelectItem>
-                <SelectItem value="createdAt">created at</SelectItem>
-                <SelectItem value="updatedAt">updated at</SelectItem>
-              </SelectGroup>
-            </SelectContent>
-          </Select>
-        </span>
-
-        <span className="col-span-5 group-has-data-[collapsible=icon]/sidebar-wrapper:sm:col-span-2 lg:col-span-2">
-          <Label htmlFor="account-type" className="text-muted-foreground">
-            Filter By Type
-          </Label>
-          <Select
-            value={typeState}
-            onValueChange={(v) => setTypeState(v as AccountTypeParam)}
-          >
-            <SelectTrigger className="w-full" id="account-type">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent position="popper">
-              <SelectGroup>
-                <SelectItem value="all">all</SelectItem>
-                <SelectItem value="cash">cash</SelectItem>
-                <SelectItem value="e_wallet">e wallet</SelectItem>
-                <SelectItem value="bank">bank</SelectItem>
-                <SelectItem value="investment">investment</SelectItem>
-              </SelectGroup>
-            </SelectContent>
-          </Select>
-        </span>
-
-        <span className="col-span-1 place-items-center group-has-data-[collapsible=icon]/sidebar-wrapper:place-items-start lg:place-items-start mt-auto">
-          <Button type="button" onClick={handleSortOrderState} size={"icon-lg"}>
-            <ArrowUpDown />
-          </Button>
-        </span>
-
-        <PopUpInput
-          titleContent="Add New Account"
-          openProp={isCreateAccountOpen}
-          onOpenChangeProp={setIsCreateAccountOpen}
-          descriptionContent="Fill in the details to create a new account"
-          triggerComponent={
-            isMobile ? (
-              <Button className="fixed right-5 bottom-5 h-16 w-16 hover:w-fit hover:px-4 group rounded-full z-40 transition-all">
-                <span className="flex items-center gap-1 ">
-                  <p className="hidden group-hover:block text-xl">Create</p>
-                  <DiamondPlus className="size-7" />
-                </span>
-              </Button>
-            ) : (
-              <Button className="col-span-12 group-has-data-[collapsible=icon]/sidebar-wrapper:lg:col-span-2 w-fit h-fit ms-auto xl:col-span-2 lg:place-items-start px-4 py-2 mt-auto">
-                <span className="flex items-center gap-1">
-                  <DiamondPlus />
-                  <p>Create</p>
-                </span>
-              </Button>
-            )
-          }
-        >
-          <form
-            className="p-4"
-            onSubmit={formCreateAccount.handleSubmit((data) => {
-              handleCreateAccount(data);
-            })}
-          >
-            <FieldSet>
-              <FieldGroup>
-                <Controller
-                  control={formCreateAccount.control}
-                  name="name"
-                  render={({ field, fieldState }) => (
-                    <Field aria-invalid={fieldState.invalid}>
-                      <FieldLabel htmlFor="account-name">
-                        Account Name
-                      </FieldLabel>
-                      <Input id="account-name" {...field} />
-                      {fieldState.invalid && (
-                        <FieldError errors={[fieldState.error]} />
-                      )}
-                    </Field>
-                  )}
-                />
-                <Controller
-                  control={formCreateAccount.control}
-                  name="balance"
-                  render={({ field: { onChange, ...fields }, fieldState }) => (
-                    <Field aria-invalid={fieldState.invalid}>
-                      <FieldLabel htmlFor="account-balance">
-                        Account Balance
-                      </FieldLabel>
-                      <Input
-                        id="account-balance"
-                        type="number"
-                        min={0}
-                        step={0.01}
-                        onChange={(e) => {
-                          const value = parseFloat(e.target.value);
-                          onChange(isNaN(value) ? 0 : value);
-                        }}
-                        {...fields}
-                      />
-                      {fieldState.invalid && (
-                        <FieldError errors={[fieldState.error]} />
-                      )}
-                    </Field>
-                  )}
-                />
-                <Controller
-                  control={formCreateAccount.control}
-                  name="type"
-                  render={({ field }) => (
-                    <Field>
-                      <FieldLabel htmlFor="account-type">
-                        Account Type
-                      </FieldLabel>
-                      <Select
-                        value={field.value}
-                        onValueChange={field.onChange}
-                      >
-                        <SelectTrigger id="account-type">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="cash">Cash</SelectItem>
-                          <SelectItem value="e_wallet">E-Wallet</SelectItem>
-                          <SelectItem value="bank">Bank</SelectItem>
-                          <SelectItem value="investment">Investment</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </Field>
-                  )}
-                />
-                <Controller
-                  control={formCreateAccount.control}
-                  name="currency_code"
-                  render={({ field }) => (
-                    <Field>
-                      <FieldLabel htmlFor="account-currency">
-                        Currency
-                      </FieldLabel>
-                      <Select
-                        value={field.value}
-                        onValueChange={field.onChange}
-                      >
-                        <SelectTrigger id="account-currency">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="IDR">IDR</SelectItem>
-                          <SelectItem value="USD">USD</SelectItem>
-                          <SelectItem value="EUR">EUR</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </Field>
-                  )}
-                />
-
-                <Field>
-                  {!isMobile && <Button variant={"outline"}> Cancel </Button>}
-                  <Button type="submit" className="w-full">
-                    Create Account
-                  </Button>
-                </Field>
-              </FieldGroup>
-            </FieldSet>
-          </form>
-        </PopUpInput>
-      </div>
+      <AccountFilters
+        queryKeyAllAccounts={{ search, page, limit, sortBy, sortOrder, type }}
+      />
 
       <ContainerScroller>
         {isLoading ? (
@@ -441,7 +156,7 @@ export default function AccountPage() {
                     <AccountCard
                       key={item.id}
                       data={item}
-                      onClick={() => handleOpenUpdateAccount(item.id)}
+                      onClick={() => handleOpenAccountDetail(item.id)}
                     />
                   ))}
               </Container>
