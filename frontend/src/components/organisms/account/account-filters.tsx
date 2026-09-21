@@ -128,7 +128,12 @@ export default function AccountFilters({
       </AccountFilter>
 
       <AccountFilter className="col-span-1 place-items-center group-has-data-[collapsible=icon]/sidebar-wrapper:place-items-start lg:place-items-start mt-auto">
-        <Button type="button" onClick={handleSortOrderState} size={"icon-lg"}>
+        <Button
+          type="button"
+          className="bg-primary/20 text-primary"
+          onClick={handleSortOrderState}
+          size={"icon-lg"}
+        >
           <ArrowUpDown />
         </Button>
       </AccountFilter>

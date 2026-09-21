@@ -1,7 +1,7 @@
 import { useIsMobile } from "@/hooks/use-mobile";
 import PopUpInput from "../pop-up-input.molecule";
 import { Button } from "@/components/ui/button";
-import { DiamondPlus } from "lucide-react";
+import { Plus } from "lucide-react";
 import { Controller, useForm } from "react-hook-form";
 import {
   createAccountSchema,
@@ -89,15 +89,15 @@ export default function CreateAccountBtn({
         isMobile ? (
           <Button className="fixed right-5 bottom-5 h-16 w-16 hover:w-fit hover:px-4 group rounded-full z-40 transition-all">
             <span className="flex items-center gap-1 ">
+              <Plus className="size-7" />
               <p className="hidden group-hover:block text-xl">Create</p>
-              <DiamondPlus className="size-7" />
             </span>
           </Button>
         ) : (
           <Button className="col-span-12 group-has-data-[collapsible=icon]/sidebar-wrapper:lg:col-span-2 w-fit h-fit ms-auto xl:col-span-2 lg:place-items-start px-4 py-2 mt-auto">
             <span className="flex items-center gap-1">
-              <DiamondPlus />
-              <p>Create</p>
+              <Plus />
+              <p>Create Account</p>
             </span>
           </Button>
         )
