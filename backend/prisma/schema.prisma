@@ -6,68 +6,67 @@ generator client {
 enum roles {
   admin
   user
+
+  @@map("roles")
 }
 
 datasource db {
   provider = "postgresql"
 }
 
-model user {
+model User {
   id            String         @id @default(uuid())
   name          String
   email         String         @unique
   password      String
-  createdAt     Int            @default(0)
-  updatedAt     Int            @default(0)
-  role          role? // for 1-1 relation
-  refreshTokens refreshToken[]
-  profile       profile?
-  accounts      account[]
-  categories    category[]
+  role          roles          @default(user)
+  createdAt     BigInt         @default(0) @map("created_at")
+  updatedAt     BigInt         @default(0) @map("updated_at")
+  refreshTokens RefreshToken[]
+  profile       Profile?
+  accounts      Account[]
+  categories    Category[]
+  transactions  Transaction[]
+  budgets       Budget[]
+  tags          Tag[]
 
-  @@index([name])
-  @@index([updatedAt])
-}
-
-// mungkin table role akan dihapus, jika ya makan user akan menambah column role
-model role {
-  id        String @id @default(uuid())
-  name      roles  @default(user)
-  userId    String @unique // for 1-1 relation
-  user      user   @relation(fields: [userId], references: [id], onDelete: Cascade)
-  createdAt Int    @default(0)
-  updatedAt Int    @default(0)
+  @@map("user")
 }
 
 // for scalable
 
-model refreshToken {
+model RefreshToken {
   id        String  @id @default(uuid())
-  token     String  @unique
-  isRevoked Boolean @default(false)
-  expiredAt Int
+  tokenHash String  @unique @map("token_hash")
+  isRevoked Boolean @default(false) @map("is_revoked")
+  expiredAt BigInt  @map("expired_at")
   device    String
-  userId    String
-  user      user    @relation(fields: [userId], references: [id], onDelete: Cascade)
-  createdAt Int     @default(0)
-  updatedAt Int     @default(0)
+  userId    String  @map("user_id")
+  user      User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt BigInt  @default(0) @map("created_at")
+  updatedAt BigInt  @default(0) @map("updated_at")
 
-  @@index([isRevoked])
   @@index([userId])
+  @@map("refresh_token")
 }
 
-model profile {
+model Profile {
   id             String  @id @default(uuid())
-  displayName    String? @unique
-  birthDate      Int?
+  displayName    String? @map("display_name")
+  birthDate      BigInt? @map("birth_date")
   profession     String?
-  avatarUrl      String?
-  avatarPublicId String?
+  avatarUrl      String? @map("avatar_url")
+  avatarPublicId String? @map("avatar_public_id")
   timezone       String
-  userId         String  @unique
-  user           user    @relation(fields: [userId], references: [id], onDelete: Cascade)
-  createdAt      Int     @default(0)
-  updatedAt      Int     @default(0)
+  userId         String  @unique @map("user_id")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  createdAt BigInt @default(0) @map("created_at")
+  updatedAt BigInt @default(0) @map("updated_at")
+
+  @@index([userId])
+  @@map("profile")
 }
 
 enum walletType {
@@ -75,6 +74,8 @@ enum walletType {
   e_wallet
   bank
   investment
+
+  @@map("wallet_type")
 }
 
 enum currencyType {
@@ -82,78 +83,142 @@ enum currencyType {
   USD
   SGD
   EUR
+
+  @@map("currency_type")
 }
 
-model account {
-  id            String       @id @default(uuid())
-  name          String
-  type          walletType   @default(cash)
-  // nanti column balance akan di hapus
-  balance       Decimal      @db.Decimal(15, 2)
-  currency_code currencyType
-  userId        String
-  user          user         @relation(fields: [userId], references: [id], onDelete: Cascade)
+model Account {
+  id             String       @id @default(uuid())
+  name           String
+  type           walletType   @default(cash)
+  initialBalance BigInt       @default(0) @map("initial_balance") // makek bigInt karena aku ingin usd atapun yang lain memakai satuan terkecilnya
+  currencyCode   currencyType @map("currency_code")
+  userId         String       @map("user_id")
+  colorName      String       @map("color_name")
 
-  createdAt    Int           @default(0)
-  updatedAt    Int           @default(0)
-  transactions transaction[]
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  @@index([name])
-  @@index([type])
-  @@index([updatedAt])
-  @@index([userId])
+  createdAt BigInt @default(0) @map("created_at")
+  updatedAt BigInt @default(0) @map("updated_at")
+
+  transactions Transaction[]
+
+  @@index([userId, name])
+  @@map("account")
 }
 
 enum transactionType {
-  // type transfer akan bertambah
   income
   expense
+  transfer_in
+  transfer_out
+
+  @@map("transaction_type")
 }
 
-model category {
-  id           String          @id @default(uuid())
-  name         String
-  type         transactionType
-  userId       String?
-  user         user?           @relation(fields: [userId], references: [id], onDelete: Cascade)
-  createdAt    Int             @default(0)
-  updatedAt    Int             @default(0)
-  transactions transaction[]
+enum categoryType {
+  income
+  expense
 
-  @@index([userId])
-  @@index([type])
-  @@index([name])
-  @@index([updatedAt])
+  @@map("category_type")
 }
 
-model transaction {
-  id              String          @id @default(uuid())
-  // amount akan jadi type bigint, usd,sgd,eur mungkin akan menjadi satuan terkecil tanpa coma
-  amount          Decimal         @db.Decimal(15, 2)
-  // column amount in idr akan ada untuk sorting
-  type            transactionType
-  note            String?
-  // column transferId akan
-  // column typeTransfer in/out akan ada juga
-  // column fee transfer
-  transactionAt   Int
-  deletedAt       Int?
-  receiptUrl      String?
-  receiptPublicId String?
-  currency_code   currencyType
-  accountId       String
-  account         account         @relation(fields: [accountId], references: [id], onDelete: Cascade)
-  categoryId      String
-  category        category        @relation(fields: [categoryId], references: [id], onDelete: Restrict)
-  createdAt       Int             @default(0)
-  updatedAt       Int             @default(0)
+model Category {
+  id        String       @id @default(uuid())
+  name      String
+  iconName  String       @map("icon_name")
+  colorName String       @map("color_name")
+  type      categoryType
+  userId    String       @map("user_id")
+  user      User         @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  @@index([updatedAt])
-  @@index([categoryId])
-  @@index([accountId])
-  @@index([transactionAt])
-  @@index([type])
-  @@index([deletedAt])
+  createdAt    BigInt        @default(0) @map("created_at")
+  updatedAt    BigInt        @default(0) @map("updated_at")
+  transactions Transaction[]
+  budgets      Budget[]
+
+  @@unique([userId, name])
+  @@map("category")
 }
 
-// akan menambah table budget 1-1 ke category (mungkin) dan table tagging
+model Transaction {
+  id                String          @id @default(uuid())
+  amount            BigInt          @default(0) // makek bigInt karena aku ingin usd atapun yang lain memakai satuan terkecilnya
+  amountInIdr       BigInt          @default(0) @map("amount_in_idr")
+  type              transactionType
+  note              String?
+  pairTransactionId String?         @unique @map("pair_transaction_id")
+  transactionAt     BigInt          @map("transaction_at")
+  deletedAt         BigInt?         @map("deleted_at")
+  receiptUrl        String?         @map("receipt_url")
+  receiptPublicId   String?         @map("receipt_public_id")
+  currencyCode      currencyType    @map("currency_code")
+  userId            String          @map("user_id")
+  accountId         String          @map("account_id")
+  categoryId        String?         @map("category_id")
+
+  user            User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  account         Account      @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  category        Category?    @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  pairTransaction Transaction? @relation("transferPair", fields: [pairTransactionId], references: [id])
+  pairedBy        Transaction? @relation("transferPair")
+
+  createdAt       BigInt           @default(0) @map("created_at")
+  updatedAt       BigInt           @default(0) @map("updated_at")
+  transactionTags TransactionTag[]
+
+  @@index([userId, amountInIdr])
+  @@index([userId, transactionAt])
+  @@index([userId, categoryId])
+  @@map("transaction")
+}
+
+model Budget {
+  id          String  @id @default(uuid())
+  name        String
+  note        String?
+  colorName   String  @map("color_name")
+  startAt     BigInt  @map("start_at")
+  endAt       BigInt  @map("end_at")
+  limitAmount BigInt  @map("limit_amount")
+  userId      String  @map("user_id")
+  categoryId  String  @map("category_id")
+
+  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  category Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+
+  createdAt BigInt @default(0) @map("created_at")
+  updatedAt BigInt @default(0) @map("updated_at")
+
+  @@index([userId, name])
+  @@index([userId, startAt, endAt])
+  @@index([userId, categoryId])
+  @@map("budget")
+}
+
+model Tag {
+  id        String @id @default(uuid())
+  name      String
+  colorName String @map("color_name")
+  userId    String @map("user_id")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  createdAt       BigInt           @default(0) @map("created_at")
+  updatedAt       BigInt           @default(0) @map("updated_at")
+  transactionTags TransactionTag[]
+
+  @@unique([userId, name])
+  @@map("tag")
+}
+
+model TransactionTag {
+  transactionId String @map("transaction_id")
+  tagId         String @map("tag_id")
+
+  transaction Transaction @relation(fields: [transactionId], references: [id], onDelete: Restrict)
+  tag         Tag         @relation(fields: [tagId], references: [id], onDelete: Restrict)
+
+  @@id([transactionId, tagId])
+  @@map("transaction_tag")
+}
