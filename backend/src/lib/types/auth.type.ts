@@ -1,12 +1,13 @@
 import z from "zod";
 import { createUserSchema } from "./user.type";
+import { roles } from "@/generated/prisma/browser";
 
 export interface AuthOutput {
   id: string;
   name: string;
   email: string;
-  role: "admin" | "user";
-  updatedAt: Number;
+  role: roles;
+  updatedAt: BigInt;
   token: {
     accessToken: string;
     refreshToken: string;
