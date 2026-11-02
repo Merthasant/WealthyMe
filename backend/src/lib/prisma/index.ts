@@ -2,7 +2,7 @@ import "dotenv/config";
 import { PrismaPg } from "@prisma/adapter-pg";
 import { PrismaClient } from "../../generated/prisma/client";
 
-const now = Math.floor(Date.now() / 1000); // convert date ke unix
+const now = Math.floor(Date.now()); // convert date ke unix tanpa bagi lebih detail
 
 const connectionString = `${process.env.DATABASE_URL}`;
 
@@ -11,8 +11,11 @@ const prisma = new PrismaClient({ adapter }).$extends({
   query: {
     $allModels: {
       async create({ args, query }) {
-        args.data.createdAt = now;
-        args.data.updatedAt = now;
+        args.data = {
+          ...args.data,
+          createdAt: now,
+          updatedAt: now,
+        };
         return query(args);
       },
       async createMany({ args, query }) {
@@ -25,17 +28,29 @@ const prisma = new PrismaClient({ adapter }).$extends({
         return query(args);
       },
       async update({ args, query }) {
-        args.data.updatedAt = now;
+        args.data = {
+          ...args.data,
+          updatedAt: now,
+        };
         return query(args);
       },
       async updateMany({ args, query }) {
-        args.data.updatedAt = now;
+        args.data = {
+          ...args.data,
+          updatedAt: now,
+        };
         return query(args);
       },
       async upsert({ args, query }) {
-        args.create.createdAt = now;
-        args.create.updatedAt = now;
-        args.update.updatedAt = now;
+        args.create = {
+          ...args.create,
+          createdAt: now,
+          updatedAt: now,
+        };
+        args.update = {
+          ...args.update,
+          updatedAt: now,
+        };
         return query(args);
       },
     },
