@@ -1,5 +1,6 @@
 import { Response } from "express";
 import responseUtils from "./response.utils";
+import { createLogger } from "./log.utils";
 
 export class ConflictError extends Error {
   constructor(message: string) {
@@ -51,7 +52,24 @@ export class InternalServerError extends Error {
 }
 
 export const catchAllErrors = (res: Response, err: any) => {
-  console.error("Unhandled error:", err);
+  const log = createLogger({ service: "error-utils" });
+
+  const isClientError =
+    err instanceof BadRequestError ||
+    err instanceof ValidationError ||
+    err instanceof UnauthorizedError ||
+    err instanceof ForbiddenError ||
+    err instanceof NotFoundError ||
+    err instanceof ConflictError;
+
+  if (isClientError) {
+    log.warn(
+      { errorName: err.name, msg: err.message },
+      "Client error occurred",
+    );
+  } else {
+    log.error({ err }, "An error occurred");
+  }
 
   if (err instanceof BadRequestError || err instanceof ValidationError) {
     return responseUtils.error(

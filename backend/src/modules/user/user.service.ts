@@ -3,34 +3,29 @@ import { prisma } from "@/lib/prisma";
 import { BaseOptionParams } from "@/lib/types/params.type";
 import { CreateUserDTO, UpdateUserDTO } from "@/lib/types/user.type.js";
 import { NotFoundError, ValidationError } from "@/lib/utils/error.utils.js";
+import { createLogger } from "@/lib/utils/log.utils";
 import validationUtils from "@/lib/utils/validation.utils.js";
 import argon2 from "argon2";
 
-const userSelectExcPass: Prisma.userSelect = {
+const log = createLogger({ service: "user-service" });
+
+const userSelectExcPass: Prisma.UserSelect = {
   id: true,
   name: true,
   email: true,
   createdAt: true,
   updatedAt: true,
-  role: {
-    select: {
-      name: true,
-    },
-  },
+  role: true,
 };
 
-const userSelectIncPass: Prisma.userSelect = {
+const userSelectIncPass: Prisma.UserSelect = {
   id: true,
   name: true,
   email: true,
   password: true,
   createdAt: true,
   updatedAt: true,
-  role: {
-    select: {
-      name: true,
-    },
-  },
+  role: true,
 };
 
 const userService = {
@@ -45,7 +40,9 @@ const userService = {
     } = option;
     const skip = (page - 1) * limit;
 
-    const where: Prisma.userWhereInput = {};
+    log.info({ option, skip }, "Finding all users with options");
+
+    const where: Prisma.UserWhereInput = {};
     if (search) {
       where.OR = [
         { name: { contains: search, mode: "insensitive" } },
@@ -69,6 +66,8 @@ const userService = {
       prisma.user.count({ where }),
     ]);
 
+    log.info({ userData, total }, "Users retrieved successfully");
+
     return {
       data: userData,
       meta: {
@@ -82,11 +81,13 @@ const userService = {
 
   // find by id
   async findById(id: string) {
+    log.info({ userId: id }, "Finding user by ID");
     validationUtils.requiredValue(id, "id");
     const userData = await prisma.user.findUnique({
       where: { id },
       select: userSelectIncPass,
     });
+    log.info({ userData }, "User data retrieved");
     // validation user
     if (!userData) throw new NotFoundError("user not found!");
 
@@ -95,11 +96,13 @@ const userService = {
 
   // find by id exclude password
   async findByIdExcPass(id: string) {
+    log.info({ userId: id }, "Finding user by ID (excluding password)");
     validationUtils.requiredValue(id, "id");
     const userData = await prisma.user.findUnique({
       where: { id },
       select: userSelectExcPass,
     });
+    log.info({ userData }, "User data retrieved (excluding password)");
     // validation user
     if (!userData) throw new NotFoundError("user not found!");
 
@@ -108,11 +111,13 @@ const userService = {
 
   // find by email
   async findByEmail(email: string) {
+    log.info({ email }, "Finding user by email");
     validationUtils.requiredValue(email, "email");
     const userData = await prisma.user.findUnique({
       where: { email },
       select: userSelectIncPass,
     });
+    log.info({ userData }, "User data retrieved by email");
     // validation user
     if (!userData) throw new NotFoundError("user not found!");
 
@@ -121,11 +126,13 @@ const userService = {
 
   // find by email exclude password
   async findByEmailExcPass(email: string) {
+    log.info({ email }, "Finding user by email (excluding password)");
     validationUtils.requiredValue(email, "email");
     const userData = await prisma.user.findUnique({
       where: { email },
       select: userSelectExcPass,
     });
+    log.info({ userData }, "User data retrieved by email (excluding password)");
     // validation user
     if (!userData) throw new NotFoundError("user not found!");
 
@@ -134,6 +141,8 @@ const userService = {
 
   // create
   async create(DTO: CreateUserDTO) {
+    log.info({ DTO }, "Creating new user");
+
     const { name, email, password, confPassword, role } = DTO;
     validationUtils.matchingPassword(password, confPassword);
 
@@ -143,27 +152,30 @@ const userService = {
         where: { email },
         select: { id: true },
       });
+      log.info({ existingEmail }, "Checking if email already exists");
       // validation email is exist
       if (existingEmail) throw new ValidationError("email is exist!");
       // hash passsword
       const hashed = await argon2.hash(password);
+      log.info({ hashed }, "Password hashed successfully");
 
       const createUserData = await tx.user.create({
         data: {
           name,
           email,
           password: hashed,
-          role: { create: { name: role } },
+          role,
         },
         select: userSelectExcPass,
       });
-
+      log.info({ createUserData }, "New user created");
       return createUserData;
     });
   },
 
   // update by id
   async updateById(id: string, DTO: UpdateUserDTO) {
+    log.info({ userId: id, DTO }, "Updating user by ID");
     validationUtils.requiredValue(id, "id");
     return await prisma.$transaction(async (tx) => {
       const { name, email, password, confPassword, role } = DTO;
@@ -171,6 +183,7 @@ const userService = {
         where: { id },
         select: { id: true },
       });
+      log.info({ existingUser }, "Checking if user exists");
       if (!existingUser) throw new NotFoundError("user not found");
       let hashed: string | undefined = undefined;
       if (password) {
@@ -178,14 +191,17 @@ const userService = {
           throw new ValidationError("confirm password is required");
         validationUtils.matchingPassword(password, confPassword);
         hashed = await argon2.hash(password);
+        log.info({ hashed }, "Password hashed successfully");
       }
 
-      const userUpdateInput: Prisma.userUpdateInput = {
+      const userUpdateInput: Prisma.UserUpdateInput = {
         ...(name !== undefined && { name }),
         ...(email !== undefined && { email }),
         ...(hashed !== undefined && { password: hashed }),
-        ...(role !== undefined && { role: { update: { name: role } } }),
+        ...(role !== undefined && { role }),
       };
+
+      log.info({ userUpdateInput }, "User update input prepared");
 
       return await tx.user.update({
         data: userUpdateInput,
@@ -197,6 +213,7 @@ const userService = {
 
   // delete by id
   async deleteById(id: string) {
+    log.info({ userId: id }, "Deleting user by ID");
     validationUtils.requiredValue(id, "id");
     return await prisma.$transaction(async (tx) => {
       const existingUser = await tx.user.findUnique({
@@ -204,6 +221,7 @@ const userService = {
         select: { id: true },
       });
       if (!existingUser) throw new NotFoundError("user not found");
+      log.info({ existingUser }, "User exists and will be deleted");
       return await tx.user.delete({ where: { id }, select: userSelectExcPass });
     });
   },
